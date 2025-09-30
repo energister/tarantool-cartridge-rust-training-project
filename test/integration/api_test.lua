@@ -29,3 +29,10 @@ g.test_metrics = function(cg)
     t.assert_equals(response.status, 200)
     t.assert_equals(response.reason, "Ok")
 end
+
+g.test_hello_world = function(cg)
+    local server = cg.cluster.main_server
+    local response = server:http_request('get', '/hello')
+    t.assert_equals(response.status, 200)
+    t.assert_equals(response.body, "Hello world!")
+end
