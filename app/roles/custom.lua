@@ -1,5 +1,11 @@
 local cartridge = require('cartridge')
 
+local function http_weather(req)
+    local resp = req:render({text = '{}' })
+    resp.status = 200
+    return resp
+end
+
 local function init(opts) -- luacheck: no unused args
     -- if opts.is_master then
     -- end
@@ -8,6 +14,11 @@ local function init(opts) -- luacheck: no unused args
     httpd:route({method = 'GET', path = '/hello'}, function()
         return {body = 'Hello world!'}
     end)
+
+    httpd:route(
+        { method = 'GET', path = '/weather'},
+        http_weather
+    )   
 
     return true
 end

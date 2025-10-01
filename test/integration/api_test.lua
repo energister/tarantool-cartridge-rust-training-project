@@ -36,3 +36,10 @@ g.test_hello_world = function(cg)
     t.assert_equals(response.status, 200)
     t.assert_equals(response.body, "Hello world!")
 end
+
+g.test_weather = function(cg)
+    local server = cg.cluster.main_server
+    local response = server:http_request('get', '/weather')
+    t.assert_equals(response.status, 200)
+    t.assert_equals(response.body, "{}")
+end
