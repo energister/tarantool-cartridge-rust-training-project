@@ -37,9 +37,15 @@ g.test_hello_world = function(cg)
     t.assert_equals(response.body, "Hello world!")
 end
 
+g.test_weather_requires_parameter = function(cg)
+    local server = cg.cluster.main_server
+    local response = server:http_request('get', '/weather', { raise = false })
+    t.assert_equals(response.status, 400)
+    t.assert_str_contains(response.body, "place")
+end
+
 g.test_weather = function(cg)
     local server = cg.cluster.main_server
-    local response = server:http_request('get', '/weather')
-    t.assert_equals(response.status, 200)
-    t.assert_equals(response.body, "{}")
+    local response = server:http_request('get', '/weather?place=Berlin')
+    t.assert_equals(response.body, '{"latitude":52.52437,"longitude":13.41053}')
 end
