@@ -15,9 +15,7 @@ local function http_weather(req)
         return { status = 404, body = "'"..place_name.."' not found" }
     end
     local place = places[1]
-    local resp = req:render({json = { latitude = place['latitude'], longitude = place['longitude'] } })
-    resp.status = 200
-    return resp
+    return req:render({json = { latitude = place['latitude'], longitude = place['longitude'] } })
 end
 
 local function init(opts) -- luacheck: no unused args

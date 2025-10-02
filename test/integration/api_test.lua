@@ -40,6 +40,7 @@ end
 g.test_weather_Berlin = function(cg)
     local server = cg.cluster.main_server
     local response = server:http_request('get', '/weather?place=Berlin')
+    t.assert_equals(response.status, 200)
     t.assert_equals(response.body, '{"latitude":52.52437,"longitude":13.41053}')
 end
 
