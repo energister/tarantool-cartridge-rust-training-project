@@ -12,7 +12,7 @@ local function http_weather(req)
     end
 
     -- TODO Does this block TX fiber?
-    local response = http_client:get('https://geocoding-api.open-meteo.com/v1/search?name=Berlin&count=1&language=en&format=json')
+    local response = http_client:get('https://geocoding-api.open-meteo.com/v1/search?name=' .. place_name .. '&count=1&language=en&format=json')
     local json = response:decode()
     local place = json['results'][1]
 
