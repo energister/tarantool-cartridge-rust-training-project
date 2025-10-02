@@ -1,4 +1,5 @@
 local cartridge = require('cartridge')
+local log = require('log')
 local http_client = require('http.client').new()
 
 local function http_weather(req)
@@ -26,6 +27,7 @@ local function init(opts) -- luacheck: no unused args
 
     local httpd = assert(cartridge.service_get('httpd'), "Failed to get httpd service")
     httpd:route({method = 'GET', path = '/hello'}, function()
+        log.error("Hello!")
         return {body = 'Hello world!'}
     end)
 
@@ -53,7 +55,7 @@ local function apply_config(conf, opts) -- luacheck: no unused args
 end
 
 return {
-    role_name = 'app.roles.custom',
+    role_name = 'app.roles.weather',
     init = init,
     stop = stop,
     validate_config = validate_config,

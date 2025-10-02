@@ -4,7 +4,7 @@ router:
   roles:
   - failover-coordinator
   - vshard-router
-  - app.roles.custom
+  - app.roles.weather
   all_rw: false
 s-1:
   instances:
