@@ -13,9 +13,13 @@ local function http_weather(req)
 
     -- TODO Does this block TX fiber?
     local response = http_client:get('https://geocoding-api.open-meteo.com/v1/search?name=' .. place_name .. '&count=1&language=en&format=json')
-    local json = response:decode()
-    local place = json['results'][1]
-
+    local places = response:decode()['results']
+    if places == nil or #places == 0 then
+        local resp = req:render({text = "'"..place_name.."' not found" })
+        resp.status = 404
+        return resp
+    end
+    local place = places[1]
     local resp = req:render({json = { latitude = place['latitude'], longitude = place['longitude'] } })
     resp.status = 200
     return resp

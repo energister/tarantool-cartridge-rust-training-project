@@ -55,3 +55,10 @@ g.test_weather_London = function(cg)
     local response = server:http_request('get', '/weather?place=London')
     t.assert_equals(response.body, '{"latitude":51.50853,"longitude":-0.12574}')
 end
+
+g.test_weather_in_nonexisting_place = function(cg)
+    local server = cg.cluster.main_server
+    local response = server:http_request('get', '/weather?place=Nowhereville', { raise = false })
+    t.assert_equals(response.status, 404)
+    t.assert_equals(response.body, "'Nowhereville' not found")
+end
