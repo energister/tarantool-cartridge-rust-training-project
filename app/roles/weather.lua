@@ -1,9 +1,8 @@
 local cartridge = require('cartridge')
-local log = require('log')
 local http_client = require('http.client').new()
 
 local function http_weather(req)
-    
+
     local place_name = req:query_param().place
     if place_name == nil or place_name == "" then
         return { status = 400, body = "'place' parameter is required" }
@@ -26,15 +25,11 @@ local function init(opts) -- luacheck: no unused args
     -- end
 
     local httpd = assert(cartridge.service_get('httpd'), "Failed to get httpd service")
-    httpd:route({method = 'GET', path = '/hello'}, function()
-        log.error("Hello!")
-        return {body = 'Hello world!'}
-    end)
 
     httpd:route(
         { method = 'GET', path = '/weather'},
         http_weather
-    )   
+    )
 
     return true
 end
