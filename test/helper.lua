@@ -19,7 +19,7 @@ helper.cluster = cartridge_helpers.Cluster:new({
         {
             alias = 'api',
             uuid = cartridge_helpers.uuid('a'),
-            roles = {'app.roles.weather'},
+            roles = {'app.roles.router'},
             servers = {
                 { instance_uuid = cartridge_helpers.uuid('a', 1), alias = 'api' },
             },
