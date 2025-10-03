@@ -1,0 +1,5 @@
+@baseUrl = http://localhost:8081
+
+### Get weather
+GET {{baseUrl}}/weather?place=London
+Accept: application/json
