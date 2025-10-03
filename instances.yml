@@ -1,4 +1,7 @@
 ---
+# myapp:
+#   log: ''
+
 myapp.router:
   advertise_uri: localhost:3301
   http_port: 8081
@@ -7,22 +10,18 @@ myapp.router:
 myapp.s1-master:
   advertise_uri: localhost:3302
   http_port: 8082
-  log: ''
 
 myapp.s1-replica:
   advertise_uri: localhost:3303
   http_port: 8083
-  log: ''
 
 myapp.s2-master:
   advertise_uri: localhost:3304
   http_port: 8084
-  log: ''
 
 myapp.s2-replica:
   advertise_uri: localhost:3305
   http_port: 8085
-  log: ''
 
 myapp-stateboard:
   listen: localhost:4401
