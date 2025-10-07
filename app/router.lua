@@ -1,4 +1,4 @@
-local http_client = require('http.client').new()
+local http_client = require('http.client')
 local vshard = require('vshard')
 local json = require('json')
 local log = require('log')
@@ -7,7 +7,7 @@ local REQUEST_TIMEOUT_IN_SECONDS = 1
 
 local function request_upstream(place_name)
     -- TODO Does this block TX fiber?
-    local response = http_client:get('https://geocoding-api.open-meteo.com/v1/search?name=' .. place_name .. '&count=1&language=en&format=json', 
+    local response = http_client.get('https://geocoding-api.open-meteo.com/v1/search?name=' .. place_name .. '&count=1&language=en&format=json', 
         {timeout = REQUEST_TIMEOUT_IN_SECONDS})
     local places = response:decode()['results']
     if places == nil or #places == 0 then
