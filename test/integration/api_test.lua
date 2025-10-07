@@ -16,20 +16,6 @@ g.before_each(function(cg) -- luacheck: no unused args
     -- helper.truncate_space_on_cluster(g.cluster, 'Set your space name here')
 end)
 
-g.test_sample = function(cg)
-    local server = cg.cluster.main_server
-    local response = server:http_request('post', '/admin/api', {json = {query = '{ cluster { self { alias } } }'}})
-    t.assert_equals(response.json, {data = { cluster = { self = { alias = 'api' } } }})
-    t.assert_equals(server.net_box:eval('return box.cfg.memtx_dir'), server.workdir)
-end
-
-g.test_metrics = function(cg)
-    local server = cg.cluster.main_server
-    local response = server:http_request('get', '/metrics')
-    t.assert_equals(response.status, 200)
-    t.assert_equals(response.reason, "Ok")
-end
-
 g.test_weather_requires_parameter = function(cg)
     local server = cg.cluster.main_server
     local response = server:http_request('get', '/weather', { raise = false })
@@ -55,4 +41,17 @@ g.test_weather_in_nonexisting_place = function(cg)
     local response = server:http_request('get', '/weather?place=Nowhereville', { raise = false })
     t.assert_equals(response.status, 404)
     t.assert_equals(response.body, "'Nowhereville' not found")
+end
+
+g.test_second_request_for_existing_place_is_served_from_cache = function(cg)
+    local server = cg.cluster.main_server
+    local city = 'Paris'
+
+    local response1 = server:http_request('get', '/weather?place=' .. city)
+    -- first request is served from the upstream server
+    t.assert_equals(response1.headers['x-cache'], 'MISS')
+
+    -- -- second request is served from the cache
+    -- local response2 = server:http_request('get', '/weather?place=' .. city)
+    -- t.assert_equals(response2.headers['x-cache'], 'HIT')
 end

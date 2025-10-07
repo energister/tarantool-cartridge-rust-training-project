@@ -14,17 +14,24 @@ helper.server_command = fio.pathjoin(helper.root, 'init.lua')
 helper.cluster = cartridge_helpers.Cluster:new({
     server_command = helper.server_command,
     datadir = helper.datadir,
-    use_vshard = false,
+    use_vshard = true,
     replicasets = {
         {
-            alias = 'api',
+            alias = 'router',
             uuid = cartridge_helpers.uuid('a'),
             roles = {'app.roles.router'},
-            servers = {
-                { instance_uuid = cartridge_helpers.uuid('a', 1), alias = 'api' },
-            },
+            servers = {{ instance_uuid = cartridge_helpers.uuid('a', 1), alias = 'router' }},
         },
-    }
+        {
+            alias = 'storage',
+            uuid = cartridge_helpers.uuid('b'),
+            roles = {'app.roles.storage'},
+            servers = {
+                { instance_uuid = cartridge_helpers.uuid('b', 1), alias = 'storage-1'},
+                { instance_uuid = cartridge_helpers.uuid('b', 2), alias = 'storage-2'},
+            }
+        },
+    },
 })
 
 function helper.truncate_space_on_cluster(cluster, space_name)
