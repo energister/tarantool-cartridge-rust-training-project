@@ -51,7 +51,24 @@ g.test_second_request_for_existing_place_is_served_from_cache = function(cg)
     -- first request is served from the upstream server
     t.assert_equals(response1.headers['x-cache'], 'MISS')
 
-    -- -- second request is served from the cache
-    -- local response2 = server:http_request('get', '/weather?place=' .. city)
-    -- t.assert_equals(response2.headers['x-cache'], 'HIT')
+    -- second request is served from the cache
+    local response2 = server:http_request('get', '/weather?place=' .. city)
+    t.assert_equals(response2.headers['x-cache'], 'HIT')
+end
+
+g.test_nonexisting_places_are_cached = function(cg)
+    local server = cg.cluster.main_server
+    local city = 'Nonexisting'
+
+    local response1 = server:http_request('get', '/weather?place=' .. city, { raise = false })
+    -- first request is served from the upstream server
+    t.assert_equals(response1.headers['x-cache'], 'MISS')
+    t.assert_equals(response1.status, 404)
+    t.assert_equals(response1.body, "'Nonexisting' not found")
+
+    -- second request is served from the cache
+    local response2 = server:http_request('get', '/weather?place=' .. city, { raise = false })
+    t.assert_equals(response2.headers['x-cache'], 'HIT')
+    t.assert_equals(response1.status, 404)
+    t.assert_equals(response1.body, "'Nonexisting' not found")
 end

@@ -1,4 +1,3 @@
-local storage = require('app.storage')
 local log = require('log')
 
 local function init(opts) -- luacheck: no unused args
@@ -25,9 +24,16 @@ end
 
 storage_api = {}
 
+local fake_storage = {}
+
 function storage_api.place_get(place_name)
     log.info("got request for %s place", place_name)
-    return nil
+    return fake_storage[place_name]
+end
+
+function storage_api.place_put(place_name, place)
+    log.info("storing place %s", place_name)
+    fake_storage[place_name] = place
 end
 
 return {
