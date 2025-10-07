@@ -25,7 +25,7 @@ local function http_get_weather(req)
         return { status = 400, body = "'place' parameter is required" }
     end
 
-    local bucket_id = vshard.router.bucket_id(place_name)
+    local bucket_id = vshard.router.bucket_id_strcrc32(place_name)
     local stored, err = vshard.router.callro(bucket_id, 'storage_api.place_get', {place_name})
     if err ~= nil then
         log.error("Failed to perform a read request to the storage: %s", err)
