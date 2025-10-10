@@ -1,8 +1,9 @@
-local log = require('log')
+local storage = require('app.storage')
 
 local function init(opts) -- luacheck: no unused args
-    -- if opts.is_master then
-    -- end
+    if opts.is_master then
+        storage.create_space()
+    end
 
     return true
 end
@@ -22,19 +23,10 @@ local function apply_config(conf, opts) -- luacheck: no unused args
     return true
 end
 
-storage_api = {}
-
-local fake_storage = {}
-
-function storage_api.place_get(place_name)
-    log.info("got request for %s place", place_name)
-    return fake_storage[place_name]
-end
-
-function storage_api.place_put(place_name, place)
-    log.info("storing place %s", place_name)
-    fake_storage[place_name] = place
-end
+storage_api = {
+    place_get = storage.place_get,
+    place_put = storage.place_put
+}
 
 return {
     role_name = 'app.roles.storage',

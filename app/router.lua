@@ -28,6 +28,7 @@ end
 
 local function with_cache_header(http_response, x_cache_header_value)
     local http_response_with_cache = { headers = { ['x-cache'] = x_cache_header_value }}
+    -- copy http_response to the http_response_with_cache
     for k, v in pairs(http_response) do
         http_response_with_cache[k] = v
     end
@@ -55,7 +56,7 @@ local function http_get_weather(req)
     local response = request_upstream(place_name)
 
     -- store the response in the storage
-    local _, err = vshard.router.callrw(bucket_id, 'storage_api.place_put', {place_name, response})
+    local _, err = vshard.router.callrw(bucket_id, 'storage_api.place_put', {bucket_id, place_name, response})
     if err ~= nil then
         log.error("Failed to perform a write request to the storage: %s", err)
         return { status = 500, body = 'Unexpected error while writing to storage' }
