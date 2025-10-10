@@ -10,9 +10,6 @@ local function create_space()
                 {'coordinates', 'map'},
             },
 
-            -- allow to insert only tuples with exact number of fields
-            field_count = 3,
-
             -- create space only if it does not exist
             if_not_exists = true,
         }
