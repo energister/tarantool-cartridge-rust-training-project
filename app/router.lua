@@ -2,6 +2,7 @@ local http_client = require('http.client')
 local vshard = require('vshard')
 local json = require('json')
 local log = require('log')
+local fiber = require('fiber')
 
 local settings = {
     open_meteo_api = {
@@ -64,12 +65,13 @@ local function http_get_weather(req)
 
     local response = request_upstream(place_name)
 
-    -- store the response in the storage
-    local _, err = vshard.router.callrw(bucket_id, 'storage_api.place_put', {bucket_id, place_name, response})
-    if err ~= nil then
-        log.error("Failed to perform a write request to the storage: %s", err)
-        return { status = 500, body = 'Unexpected error while writing to storage' }
-    end
+    -- store the response in the storage asynchronously
+    fiber.create(function()
+        local _, err = vshard.router.callrw(bucket_id, 'storage_api.place_put', {bucket_id, place_name, response})
+        if err ~= nil then
+            log.error("Failed to perform a write request to the storage: %s", err)
+        end
+    end)
 
     return with_cache_header(response, 'MISS')
 end
