@@ -37,7 +37,8 @@ local function request_upstream(place_name)
     end
 end
 
-local function with_cache_header(http_response, x_cache_header_value)
+local function with_cache_header(x_cache_header_value, http_response)
+    checks('string', 'table')
     local http_response_with_cache = { headers = { ['x-cache'] = x_cache_header_value }}
     -- copy http_response to the http_response_with_cache
     for k, v in pairs(http_response) do
@@ -60,7 +61,7 @@ local function http_get_weather(req)
     end
 
     if stored ~= nil then
-        return with_cache_header(stored, 'HIT')
+        return with_cache_header('HIT', stored)
     end
 
     local response = request_upstream(place_name)
@@ -73,7 +74,7 @@ local function http_get_weather(req)
         end
     end)
 
-    return with_cache_header(response, 'MISS')
+    return with_cache_header('MISS', response)
 end
 
 return {
