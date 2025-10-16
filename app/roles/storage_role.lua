@@ -14,7 +14,7 @@ end
 local function get_weather_for_place(bucket_id, place_name)
     checks('number', 'string')
 
-    local coordinates = storage.place_get(place_name)
+    local coordinates = storage.coordinates_get(place_name)
     if coordinates ~= nil then
         return { cached = true, coordinates = coordinates }
 end
@@ -26,7 +26,7 @@ end
     end
 
     -- cache the response
-    storage.place_put(bucket_id, place_name, response)
+    storage.coordinates_put(bucket_id, place_name, response)
 
     return { cached = false, coordinates = response }
 end

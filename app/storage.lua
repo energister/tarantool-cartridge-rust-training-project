@@ -28,7 +28,7 @@ local function create_space()
     })
 end
 
-local function place_get(place_name)
+local function coordinates_get(place_name)
     local place = box.space.place:get(place_name)
     if place then
         return place.coordinates
@@ -37,7 +37,7 @@ local function place_get(place_name)
     end
 end
 
-local function place_put(bucket_id, place_name, coordinates)
+local function coordinates_put(bucket_id, place_name, coordinates)
     checks('number', 'string', 'table')
     local storable_coordinates = setmetatable(coordinates, { __serialize = "map" })
     box.space.place:insert({ place_name, bucket_id, storable_coordinates })
@@ -47,6 +47,6 @@ end
 
 return {
     create_space = create_space,
-    place_get = place_get,
-    place_put = place_put,
+    coordinates_get = coordinates_get,
+    coordinates_put = coordinates_put,
 }
