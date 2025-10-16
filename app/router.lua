@@ -1,41 +1,7 @@
-local http_client = require('http.client')
 local vshard = require('vshard')
-local json = require('json')
 local log = require('log')
+local cartridge = require('cartridge')
 local fiber = require('fiber')
-
-local settings = {
-    open_meteo_api = {
-        REQUEST_TIMEOUT_IN_SECONDS_DEFAULT = 1
-    }
-}
-settings.open_meteo_api.request_timeout_in_seconds = settings.open_meteo_api.REQUEST_TIMEOUT_IN_SECONDS_DEFAULT
-function settings.open_meteo_api:set_request_timeout_in_seconds(timeout)
-    checks('?', 'number|nil')
-    self.request_timeout_in_seconds = timeout or self.REQUEST_TIMEOUT_IN_SECONDS_DEFAULT
-    log.info("Set open_meteo_api.request_timeout_in_seconds to %s", tostring(self.request_timeout_in_seconds))
-end
-
-local function query_open_meteo_site(place_name)
-    local response = http_client.get('https://geocoding-api.open-meteo.com/v1/search?name=' .. place_name .. '&count=1&language=en&format=json', 
-        {timeout = settings.open_meteo_api.request_timeout_in_seconds})
-    local places = response:decode()['results']
-    if places == nil or #places == 0 then
-        return nil
-    end
-
-    local place = places[1]
-    return { latitude = place['latitude'], longitude = place['longitude'] }
-end
-
-local function request_upstream(place_name)
-    local place = query_open_meteo_site(place_name)
-    if place == nil then
-        return { status = 404, body = "'"..place_name.."' not found" }
-    else
-        return { status = 200, body = json.encode(place) }
-    end
-end
 
 local function with_cache_header(x_cache_header_value, http_response)
     checks('string', 'table')
@@ -64,11 +30,15 @@ local function http_get_weather(req)
         return with_cache_header('HIT', stored)
     end
 
-    local response = request_upstream(place_name)
+    local response, err = cartridge.rpc_call('app.roles.data_fetcher', 'request_upstream', { place_name })
+    if err ~= nil then
+        log.error("Failed to perform an RPC call to the data_fetcher: %s", err)
+        return { status = 500, body = 'Unexpected error while fetching data from upstream server' }
+    end
 
     -- store the response in the storage asynchronously
     fiber.create(function()
-        local _, err = vshard.router.callrw(bucket_id, 'storage_api.place_put', {bucket_id, place_name, response})
+        local _, err = vshard.router.callrw(bucket_id, 'storage_api.place_put', { bucket_id, place_name, response })
         if err ~= nil then
             log.error("Failed to perform a write request to the storage: %s", err)
         end
@@ -79,5 +49,4 @@ end
 
 return {
     http_get_weather = http_get_weather,
-    settings = settings
 }

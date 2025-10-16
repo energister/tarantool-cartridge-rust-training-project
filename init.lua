@@ -43,6 +43,7 @@ local ok, err = cartridge.cfg({
         'cartridge.roles.metrics',
         'app.roles.router_role',
         'app.roles.storage_role',
+        'app.roles.data_fetcher_role',
     },
 })
 

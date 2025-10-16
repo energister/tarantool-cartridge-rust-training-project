@@ -23,6 +23,10 @@ myapp.s2-replica:
   advertise_uri: localhost:3305
   http_port: 8085
 
+myapp.data_fetcher:
+  advertise_uri: localhost:3306
+  http_port: 8086
+
 myapp-stateboard:
   listen: localhost:4401
   password: passwd

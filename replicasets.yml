@@ -23,3 +23,9 @@ s-2:
   weight: 1
   all_rw: false
   vshard_group: default
+data_fetcher:
+  instances:
+  - data_fetcher
+  roles:
+  - app.roles.data_fetcher
+  all_rw: false

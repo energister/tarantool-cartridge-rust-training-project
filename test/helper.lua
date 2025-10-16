@@ -31,6 +31,14 @@ helper.cluster = cartridge_helpers.Cluster:new({
                 { instance_uuid = cartridge_helpers.uuid('b', 2), alias = 'storage-2'},
             }
         },
+        {
+            alias = 'data_fetcher',
+            uuid = cartridge_helpers.uuid('c'),
+            roles = {'app.roles.data_fetcher'},
+            servers = {
+                { instance_uuid = cartridge_helpers.uuid('c', 1), alias = 'data_fetcher'},
+            }
+        },
     },
 })
 
