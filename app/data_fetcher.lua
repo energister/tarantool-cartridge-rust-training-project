@@ -13,7 +13,7 @@ function settings.open_meteo_api:set_request_timeout_in_seconds(timeout)
     log.info("Set open_meteo_api.request_timeout_in_seconds to %s", tostring(self.request_timeout_in_seconds))
 end
 
-local function request_upstream(place_name)
+local function get_coordinates(place_name)
     checks('string')
     local response = http_client.get('https://geocoding-api.open-meteo.com/v1/search?name=' .. place_name .. '&count=1&language=en&format=json',
         {timeout = settings.open_meteo_api.request_timeout_in_seconds})
@@ -29,5 +29,5 @@ end
 
 return {
     settings = settings,
-    request_upstream = request_upstream,
+    get_coordinates = get_coordinates,
 }

@@ -12,21 +12,21 @@ end
 local function get_weather_for_place(bucket_id, place_name)
     checks('number', 'string')
 
-    local coordinates = storage.coordinates_get(place_name)
-    if coordinates ~= nil then
-        return { cached = true, coordinates = coordinates }
+    local stored = storage.coordinates_get(place_name)
+    if stored ~= nil then
+        return { cached = true, coordinates = stored }
     end
 
-    local response, err = cartridge.rpc_call('app.roles.data_fetcher', 'request_upstream', { place_name })
-    if err ~= nil or response == nil then
+    local coordinates, err = cartridge.rpc_call('app.roles.data_fetcher', 'get_coordinates', { place_name })
+    if err ~= nil or coordinates == nil then
         log.error("Failed to perform an RPC call to the data_fetcher: %s", err)
         return nil
     end
 
     -- cache the response
-    storage.coordinates_put(bucket_id, place_name, response)
+    storage.coordinates_put(bucket_id, place_name, coordinates)
 
-    return { cached = false, coordinates = response }
+    return { cached = false, coordinates = coordinates }
 end
 
 storage_api = {

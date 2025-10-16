@@ -37,5 +37,5 @@ return {
     role_name = 'app.roles.data_fetcher',
     validate_config = validate_config,
     apply_config = apply_config,
-    request_upstream = fetcher.request_upstream,
+    get_coordinates = fetcher.get_coordinates,
 }
