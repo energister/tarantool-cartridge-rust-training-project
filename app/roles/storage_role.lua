@@ -1,4 +1,7 @@
 local storage = require('app.storage')
+local checks = require('checks')
+local cartridge = require('cartridge')
+local log = require('log')
 
 local function init(opts) -- luacheck: no unused args
     if opts.is_master then
@@ -8,31 +11,32 @@ local function init(opts) -- luacheck: no unused args
     return true
 end
 
-local function stop()
-    return true
+local function get_weather_for_place(bucket_id, place_name)
+    checks('number', 'string')
+
+    local coordinates = storage.place_get(place_name)
+    if coordinates ~= nil then
+        return { cached = true, coordinates = coordinates }
 end
 
-local function validate_config(conf_new, conf_old) -- luacheck: no unused args
-    return true
-end
+    local response, err = cartridge.rpc_call('app.roles.data_fetcher', 'request_upstream', { place_name })
+    if err ~= nil or response == nil then
+        log.error("Failed to perform an RPC call to the data_fetcher: %s", err)
+        return nil
+    end
 
-local function apply_config(conf, opts) -- luacheck: no unused args
-    -- if opts.is_master then
-    -- end
+    -- cache the response
+    storage.place_put(bucket_id, place_name, response)
 
-    return true
+    return { cached = false, coordinates = response }
 end
 
 storage_api = {
-    place_get = storage.place_get,
-    place_put = storage.place_put
+    get_weather_for_place = get_weather_for_place,
 }
 
 return {
     role_name = 'app.roles.storage',
     init = init,
-    stop = stop,
-    validate_config = validate_config,
-    apply_config = apply_config,
     dependencies = {'cartridge.roles.vshard-storage'},
 }

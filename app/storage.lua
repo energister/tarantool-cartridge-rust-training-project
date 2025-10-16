@@ -39,9 +39,11 @@ end
 
 local function place_put(bucket_id, place_name, coordinates)
     checks('number', 'string', 'table')
-    box.space.place:insert{place_name, bucket_id, coordinates}
+    local storable_coordinates = setmetatable(coordinates, { __serialize = "map" })
+    box.space.place:insert({ place_name, bucket_id, storable_coordinates })
     return true
 end
+
 
 return {
     create_space = create_space,

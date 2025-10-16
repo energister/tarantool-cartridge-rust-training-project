@@ -1,17 +1,6 @@
 local vshard = require('vshard')
 local log = require('log')
-local cartridge = require('cartridge')
-local fiber = require('fiber')
-
-local function with_cache_header(x_cache_header_value, http_response)
-    checks('string', 'table')
-    local http_response_with_cache = { headers = { ['x-cache'] = x_cache_header_value }}
-    -- copy http_response to the http_response_with_cache
-    for k, v in pairs(http_response) do
-        http_response_with_cache[k] = v
-    end
-    return http_response_with_cache
-end
+local json = require('json')
 
 local function http_get_weather(req)
     local place_name = req:query_param().place
@@ -20,31 +9,20 @@ local function http_get_weather(req)
     end
 
     local bucket_id = vshard.router.bucket_id_strcrc32(place_name)
-    local stored, err = vshard.router.callro(bucket_id, 'storage_api.place_get', {place_name})
-    if err ~= nil then
-        log.error("Failed to perform a read request to the storage: %s", err)
-        return { status = 500, body = 'Unexpected error while reading from storage' }
-    end
-
-    if stored ~= nil then
-        return with_cache_header('HIT', stored)
-    end
-
-    local response, err = cartridge.rpc_call('app.roles.data_fetcher', 'request_upstream', { place_name })
-    if err ~= nil then
-        log.error("Failed to perform an RPC call to the data_fetcher: %s", err)
-        return { status = 500, body = 'Unexpected error while fetching data from upstream server' }
-    end
-
-    -- store the response in the storage asynchronously
-    fiber.create(function()
-        local _, err = vshard.router.callrw(bucket_id, 'storage_api.place_put', { bucket_id, place_name, response })
+    local storage_response, err = vshard.router.callrw(bucket_id, 'storage_api.get_weather_for_place', { bucket_id, place_name })
+    if storage_response == nil then
         if err ~= nil then
-            log.error("Failed to perform a write request to the storage: %s", err)
+            log.error("Failed to request the storage: %s", err)
         end
-    end)
+        return { status = 500, body = 'Unexpected error while querying cache' }
+    end
 
-    return with_cache_header('MISS', response)
+    local x_cache_header = { ['x-cache'] = storage_response.cached and 'HIT' or 'MISS' }
+    if next(storage_response.coordinates) == nil then
+        return { status = 404, headers = x_cache_header, body = "'"..place_name.."' not found" }
+    else
+        return { status = 200, headers = x_cache_header, body = json.encode(storage_response.coordinates) }
+    end
 end
 
 return {
