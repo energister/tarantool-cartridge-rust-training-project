@@ -15,7 +15,7 @@ end
 
 local function request_upstream(place_name)
     checks('string')
-    local response = http_client.get('https://geocoding-api.open-meteo.com/v1/search?name=' .. place_name .. '&count=1&language=en&format=json', 
+    local response = http_client.get('https://geocoding-api.open-meteo.com/v1/search?name=' .. place_name .. '&count=1&language=en&format=json',
         {timeout = settings.open_meteo_api.request_timeout_in_seconds})
     local places = response:decode()['results']
     if places == nil or #places == 0 then
