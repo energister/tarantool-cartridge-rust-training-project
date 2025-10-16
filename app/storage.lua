@@ -1,6 +1,11 @@
 local checks = require('checks')
 
-local function create_space()
+local function create_space(is_master)
+    checks('boolean')
+    if not is_master then
+        return
+    end
+
     local places = box.schema.create_space(
         'place',
         {

@@ -3,10 +3,8 @@ local checks = require('checks')
 local cartridge = require('cartridge')
 local log = require('log')
 
-local function init(opts) -- luacheck: no unused args
-    if opts.is_master then
-        storage.create_space()
-    end
+local function init(opts)
+    storage.create_space(opts.is_master)
 
     return true
 end
@@ -17,7 +15,7 @@ local function get_weather_for_place(bucket_id, place_name)
     local coordinates = storage.coordinates_get(place_name)
     if coordinates ~= nil then
         return { cached = true, coordinates = coordinates }
-end
+    end
 
     local response, err = cartridge.rpc_call('app.roles.data_fetcher', 'request_upstream', { place_name })
     if err ~= nil or response == nil then
