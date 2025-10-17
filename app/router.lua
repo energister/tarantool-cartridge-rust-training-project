@@ -21,12 +21,16 @@ local function http_get_weather(req)
     if next(storage_response.coordinates) == nil then
         return { status = 404, headers = x_cache_header, body = "'"..place_name.."' not found" }
     elseif storage_response.weather == nil then
-        local response = { }
-        response['coordinates'] = storage_response.coordinates
+        local response = { coordinates = storage_response.coordinates }
         return { status = 503, headers = x_cache_header, body = json.encode(response) }
     else
-        local response = storage_response.weather
-        response['coordinates'] = storage_response.coordinates
+        local response = { coordinates = storage_response.coordinates }
+        do
+            local weather = storage_response.weather
+            
+            response.point_in_time = weather.point_in_time
+            response.temperature_celsius = weather.temperature_celsius
+        end
         return { status = 200, headers = x_cache_header, body = json.encode(response) }
     end
 end

@@ -35,7 +35,9 @@ local function create_weather_space()
             format = {
                 {'place_name', 'string'},
                 {'bucket_id', 'unsigned'},
-                {'weather', 'map'},
+                {'point_in_time', 'datetime'},
+                {'expiration', 'datetime'},
+                {'weather_data', 'map'},
             },
 
             -- create space only if it does not exist
@@ -81,13 +83,16 @@ end
 local function weather_get(place_name)
     checks('string')
     local stored = box.space.weather:get(place_name)
-    return stored and stored.weather
+    return stored and {
+        expiration = stored.expiration,
+        weather_data = stored.weather_data
+    }
 end
 
-local function weather_put(bucket_id, place_name, weather)
-    checks('number', 'string', 'table')
+local function weather_upsert(bucket_id, place_name, point_in_time, expiration, weather_data)
+    checks('number', 'string', 'datetime', 'datetime', 'table')
     local place = box.space.place:get(place_name)
-    box.space.weather:insert({ place_name, bucket_id, weather })
+    box.space.weather:put({ place_name, bucket_id, point_in_time, expiration, weather_data })
     return true
 end
 
@@ -96,5 +101,5 @@ return {
     coordinates_get = coordinates_get,
     coordinates_put = coordinates_put,
     weather_get = weather_get,
-    weather_put = weather_put
+    weather_upsert = weather_upsert
 }

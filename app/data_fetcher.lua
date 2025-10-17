@@ -1,5 +1,6 @@
 local log = require('log')
 local http_client = require('http.client')
+local datetime = require('datetime')
 
 local settings = {
     open_meteo_api = {
@@ -56,9 +57,18 @@ local function get_weather(latitude, longitude)
         return nil
     end
 
+    if (response_data['current']['interval'] == nil) then
+        log.error("No 'interval' field in the weather data for coordinates: %f,%f", latitude, longitude)
+        return nil
+    end
+
+    local point_in_time = datetime.parse(response_data['current']['time'])
+    local ttl_interval = datetime.interval.new({ sec = response_data['current']['interval'] })
+
     return {
-        point_in_time = response_data['current']['time'],
-        temperature_celsius = response_data['current']['temperature']
+        point_in_time = point_in_time,
+        expiration = point_in_time + ttl_interval,
+        temperature_celsius = response_data['current']['temperature'],
     }
 end
 

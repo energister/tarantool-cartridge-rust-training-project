@@ -3,6 +3,9 @@ local g = t.group('integration_api')
 
 local helper = require('test.helper')
 
+local http_client = require('http.client')
+local datetime = require('datetime')
+
 g.before_all(function(cg)
     cg.cluster = helper.cluster
     cg.cluster:start()
@@ -29,9 +32,22 @@ g.test_weather_Berlin = function(cg)
     t.assert_equals(response.status, 200)
     t.assert_equals(response.json['coordinates']['latitude'], 52.52437)
     t.assert_equals(response.json['coordinates']['longitude'], 13.41053)
+    t.assert_gt(response.json['temperature_celsius'], 0)
+end
+
+local function get_temperature(latitude, longitude)
+    local url = string.format(
+        'https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&current=temperature',
+        tostring(latitude),
+        tostring(longitude)
+    )
+    local data = http_client.get(url):decode()
+    return tostring(datetime.parse(data['current']['time'])),
+        data['current']['temperature']
 end
 
 g.test_weather_London = function(cg)
+    local time1, temperature1 = get_temperature(51.50853, -0.12574)
     local server = cg.cluster.main_server
 
     --[[ Act ]]
@@ -41,16 +57,20 @@ g.test_weather_London = function(cg)
     t.assert_equals(response.status, 200)
     t.assert_equals(response.json['coordinates']['latitude'], 51.50853)
     t.assert_equals(response.json['coordinates']['longitude'], -0.12574)
-    t.assert_not_equals(response.json['point_in_time'], nil)
 
-    -- check temperature value
-    local weather = require('http.client')
-        .get('https://api.open-meteo.com/v1/forecast?latitude=51.50853&longitude=-0.12574&current=temperature'):decode()
-    if (response.json['point_in_time'] == weather['current']['time']) then
-        t.assert_equals(response.json['temperature_celsius'], weather['current']['temperature'])
+    -- Check temperature value (it might change between requests)
+    local time2, temperature2 = get_temperature(51.50853, -0.12574)
+
+    if (response.json['point_in_time'] == time1) then
+        t.assert_equals(response.json['temperature_celsius'], temperature1)
+    elseif (response.json['point_in_time'] == time2) then
+        t.assert_equals(response.json['temperature_celsius'], temperature2)
     else
-        -- time changed between requests, so don't compare exact values
-        t.assert_gt(response.json['temperature_celsius'], 0)
+        local error_msg = string.format(
+            "Temperature time can't change twice during test (and so the temperature): got %s, expected %s or %s",
+            response.json['point_in_time'], time1, time2
+        )
+        t.fail(error_msg)
     end
 end
 
@@ -90,4 +110,28 @@ g.test_response_then_upstream_is_temporarily_unavailable = function(cg)
     t.assert_equals(response.json['point_in_time'], nil)
     t.assert_equals(response.json['temperature_celsius'], nil)
     ]]
+end
+
+g.test_cache_record_expiration = function(cg)
+    local server = cg.cluster.main_server
+    local city = 'Rome'
+
+    -- first request is served from the upstream server
+    local response1 = server:http_request('get', '/weather?place=' .. city)
+    t.assert_equals(response1.headers['x-cache'], 'MISS')
+
+    -- simulate cache record expiration
+    for _, server in ipairs(cg.cluster:servers_by_role('app.roles.storage')) do
+        server.net_box:eval([[
+        if not box.cfg.read_only then
+            local space = box.space.weather
+            local expiration = require('datetime').now():sub({ seconds = 1 })
+            space:update('Rome', {{'=', 4, expiration}})
+        end
+        ]])
+    end
+
+    -- next request after cache expiration is served from the upstream server again
+    local response2 = server:http_request('get', '/weather?place=' .. city)
+    t.assert_equals(response2.headers['x-cache'], 'MISS')
 end
