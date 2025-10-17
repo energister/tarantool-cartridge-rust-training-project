@@ -4,29 +4,85 @@ local cartridge = require('cartridge')
 local log = require('log')
 
 local function init(opts)
-    storage.create_space(opts.is_master)
+    storage.create_spaces(opts.is_master)
 
     return true
 end
 
-local function get_weather_for_place(bucket_id, place_name)
+local function get_coordinates(bucket_id, place_name)
     checks('number', 'string')
 
     local stored = storage.coordinates_get(place_name)
     if stored ~= nil then
-        return { cached = true, coordinates = stored }
+        return stored
     end
 
     local coordinates, err = cartridge.rpc_call('app.roles.data_fetcher', 'get_coordinates', { place_name })
     if err ~= nil or coordinates == nil then
-        log.error("Failed to perform an RPC call to the data_fetcher: %s", err)
+        log.error("Failed to perform an RPC call to the data_fetcher.get_coordinates: %s", err)
         return nil
     end
 
     -- cache the response
     storage.coordinates_put(bucket_id, place_name, coordinates)
+    return coordinates
+end
 
-    return { cached = false, coordinates = coordinates }
+local function fetch_weather(bucket_id, place_name, coordinates)
+    checks('number', 'string', 'table')
+
+    local arguments = { coordinates.latitude, coordinates.longitude }
+    local weather, err = cartridge.rpc_call('app.roles.data_fetcher', 'get_weather', arguments)
+    if err ~= nil or weather == nil then
+        log.error("Failed to perform an RPC call to the data_fetcher.get_weather: %s", err)
+        return nil
+    end
+
+    -- cache the response
+    storage.weather_put(bucket_id, place_name, weather)
+
+    return weather
+end
+
+local function get_weather_for_place(bucket_id, place_name)
+    checks('number', 'string')
+
+    local stored_weather = storage.weather_get(place_name)
+    if stored_weather ~= nil then
+        log.debug("Cache HIT for weather of '%s'", place_name)
+        return {
+            cached = true,
+            -- coordinates are guaranteed to be cached when the weather is cached
+            coordinates = storage.coordinates_get(place_name),
+            weather = stored_weather
+        }
+    end
+
+    log.debug("Cache MISS for weather of '%s'", place_name)
+
+    local coordinates = get_coordinates(bucket_id,place_name)
+    if coordinates == nil then
+        -- failed to fetch coordinates
+        return nil
+    elseif next(coordinates) == nil then
+        -- place not found
+        return {
+            cached = true,
+            coordinates = {},
+            weather = nil,
+        }
+    end
+
+    local weather = fetch_weather(bucket_id, place_name, coordinates)
+    if (weather == nil) then
+        -- failed to fetch weather
+        return nil
+    end
+    return {
+        cached = false,
+        coordinates = coordinates,
+        weather = weather,
+    }
 end
 
 storage_api = {

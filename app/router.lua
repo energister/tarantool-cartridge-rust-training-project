@@ -20,8 +20,14 @@ local function http_get_weather(req)
     local x_cache_header = { ['x-cache'] = storage_response.cached and 'HIT' or 'MISS' }
     if next(storage_response.coordinates) == nil then
         return { status = 404, headers = x_cache_header, body = "'"..place_name.."' not found" }
+    elseif storage_response.weather == nil then
+        local response = { }
+        response['coordinates'] = storage_response.coordinates
+        return { status = 503, headers = x_cache_header, body = json.encode(response) }
     else
-        return { status = 200, headers = x_cache_header, body = json.encode(storage_response.coordinates) }
+        local response = storage_response.weather
+        response['coordinates'] = storage_response.coordinates
+        return { status = 200, headers = x_cache_header, body = json.encode(response) }
     end
 end
 

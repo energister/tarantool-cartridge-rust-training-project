@@ -38,4 +38,5 @@ return {
     validate_config = validate_config,
     apply_config = apply_config,
     get_coordinates = fetcher.get_coordinates,
+    get_weather = fetcher.get_weather,
 }

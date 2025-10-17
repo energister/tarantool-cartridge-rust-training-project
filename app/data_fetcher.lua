@@ -15,19 +15,56 @@ end
 
 local function get_coordinates(place_name)
     checks('string')
-    local response = http_client.get('https://geocoding-api.open-meteo.com/v1/search?name=' .. place_name .. '&count=1&language=en&format=json',
-        {timeout = settings.open_meteo_api.request_timeout_in_seconds})
-    local places = response:decode()['results']
-    if places == nil or #places == 0 then
+    local url = string.format(
+        'https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json',
+        place_name
+    )
+    local response = http_client.get(url, { timeout = settings.open_meteo_api.request_timeout_in_seconds })
+    local geo_data = response:decode()
+    if geo_data['results'] == nil or #geo_data['results'] == 0 then
+        -- place not found
         return {}
     end
 
-    local place = places[1]
-    return { latitude = place['latitude'], longitude = place['longitude'] }
+    return {
+        latitude = geo_data['results'][1]['latitude'],
+        longitude = geo_data['results'][1]['longitude'],
+    }
+end
+
+local function get_weather(latitude, longitude)
+    checks('number', 'number')
+    local url = string.format(
+        'https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=temperature',
+        latitude,
+        longitude
+    )
+    local response = http_client.get(url, {timeout = settings.open_meteo_api.request_timeout_in_seconds})
+    local response_data = response:decode()
+    if (response_data['current'] == nil) then
+        log.error("No current weather data for coordinates: %f,%f", latitude, longitude)
+        return nil
+    end
+
+    if (response_data['current']['time'] == nil) then
+        log.error("No 'time' field in the weather data for coordinates: %f,%f", latitude, longitude)
+        return nil
+    end
+
+    if (response_data['current']['temperature'] == nil) then
+        log.error("No 'temperature' field in the weather data for coordinates: %f,%f", latitude, longitude)
+        return nil
+    end
+
+    return {
+        point_in_time = response_data['current']['time'],
+        temperature_celsius = response_data['current']['temperature']
+    }
 end
 
 
 return {
     settings = settings,
     get_coordinates = get_coordinates,
+    get_weather = get_weather,
 }
