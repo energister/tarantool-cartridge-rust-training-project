@@ -23,20 +23,28 @@ helper.cluster = cartridge_helpers.Cluster:new({
             servers = {{ instance_uuid = cartridge_helpers.uuid('a', 1), alias = 'router' }},
         },
         {
-            alias = 'storage',
+            alias = 'storage-1',
             uuid = cartridge_helpers.uuid('b'),
             roles = {'app.roles.storage'},
             servers = {
-                { instance_uuid = cartridge_helpers.uuid('b', 1), alias = 'storage-1'},
-                { instance_uuid = cartridge_helpers.uuid('b', 2), alias = 'storage-2'},
+                { instance_uuid = cartridge_helpers.uuid('b', 1), alias = 'storage-1a'},
+                { instance_uuid = cartridge_helpers.uuid('b', 2), alias = 'storage-1b'},
+            }
+        },
+        {
+            alias = 'storage-2',
+            uuid = cartridge_helpers.uuid('c'),
+            roles = {'app.roles.storage'},
+            servers = {
+                { instance_uuid = cartridge_helpers.uuid('c', 1), alias = 'storage-2'},
             }
         },
         {
             alias = 'data_fetcher',
-            uuid = cartridge_helpers.uuid('c'),
+            uuid = cartridge_helpers.uuid('d'),
             roles = {'app.roles.data_fetcher'},
             servers = {
-                { instance_uuid = cartridge_helpers.uuid('c', 1), alias = 'data_fetcher'},
+                { instance_uuid = cartridge_helpers.uuid('d', 1), alias = 'data_fetcher'},
             }
         },
     },
