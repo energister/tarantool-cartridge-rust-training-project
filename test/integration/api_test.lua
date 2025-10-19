@@ -61,9 +61,9 @@ g.test_weather_London = function(cg)
     -- Check temperature value (it might change between requests)
     local time2, temperature2 = get_temperature(51.50853, -0.12574)
 
-    if (response.json['point_in_time'] == time1) then
+    if response.json['point_in_time'] == time1 then
         t.assert_equals(response.json['temperature_celsius'], temperature1)
-    elseif (response.json['point_in_time'] == time2) then
+    elseif response.json['point_in_time'] == time2 then
         t.assert_equals(response.json['temperature_celsius'], temperature2)
     else
         local error_msg = string.format(

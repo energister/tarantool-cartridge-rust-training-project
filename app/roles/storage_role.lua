@@ -75,7 +75,7 @@ local function get_weather_for_place(bucket_id, place_name)
     end
 
     local weather = fetch_weather(bucket_id, place_name, coordinates)
-    if (weather == nil) then
+    if weather == nil then
         -- failed to fetch weather
         return nil
     end

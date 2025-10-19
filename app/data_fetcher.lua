@@ -42,22 +42,22 @@ local function get_weather(latitude, longitude)
     )
     local response = http_client.get(url, {timeout = settings.open_meteo_api.request_timeout_in_seconds})
     local response_data = response:decode()
-    if (response_data['current'] == nil) then
+    if response_data['current'] == nil then
         log.error("No current weather data for coordinates: %f,%f", latitude, longitude)
         return nil
     end
 
-    if (response_data['current']['time'] == nil) then
+    if response_data['current']['time'] == nil then
         log.error("No 'time' field in the weather data for coordinates: %f,%f", latitude, longitude)
         return nil
     end
 
-    if (response_data['current']['temperature'] == nil) then
+    if response_data['current']['temperature'] == nil then
         log.error("No 'temperature' field in the weather data for coordinates: %f,%f", latitude, longitude)
         return nil
     end
 
-    if (response_data['current']['interval'] == nil) then
+    if response_data['current']['interval'] == nil then
         log.error("No 'interval' field in the weather data for coordinates: %f,%f", latitude, longitude)
         return nil
     end
