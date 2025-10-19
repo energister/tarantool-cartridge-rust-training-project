@@ -61,7 +61,7 @@ local function get_weather_for_place(bucket_id, place_name)
 
     log.debug("Cache MISS for weather of '%s' (expiration was at %s)", place_name, stored_weather and stored_weather.expiration)
 
-    local coordinates = get_coordinates(bucket_id,place_name)
+    local coordinates = get_coordinates(bucket_id, place_name)
     if coordinates == nil then
         -- failed to fetch coordinates
         return nil
