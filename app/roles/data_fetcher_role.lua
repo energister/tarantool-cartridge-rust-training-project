@@ -1,5 +1,5 @@
 -- Role: data_fetcher
--- Purpose: Incapsulate interactions with the remote server API (https://open-meteo.com/)
+-- Purpose: Encapsulate interactions with the remote server API (https://open-meteo.com/)
 local log = require('log')
 local fetcher = require('app.data_fetcher')
 
