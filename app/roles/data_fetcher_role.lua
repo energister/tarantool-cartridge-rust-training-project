@@ -8,10 +8,7 @@ local CFG_SECTION_NAME = 'open_meteo_api'
 local CFG_REQUEST_TIMEOUT_OPTION_NAME = 'request_timeout_in_seconds'
 
 local function validate_config(conf_new, conf_old) -- luacheck: no unused args
-    local timeout = conf_new[CFG_FILE_NAME]
-        and conf_new[CFG_FILE_NAME][CFG_SECTION_NAME]
-        and conf_new[CFG_FILE_NAME][CFG_SECTION_NAME][CFG_REQUEST_TIMEOUT_OPTION_NAME]
-
+    local timeout = ((conf_new[CFG_FILE_NAME] or {})[CFG_SECTION_NAME] or {})[CFG_REQUEST_TIMEOUT_OPTION_NAME]
     if timeout ~= nil
         and (type(timeout) ~= 'number' or timeout < 0) then
 
@@ -24,9 +21,7 @@ local function validate_config(conf_new, conf_old) -- luacheck: no unused args
 end
 
 local function apply_config(conf, opts) -- luacheck: no unused args
-    local timeout = conf[CFG_FILE_NAME]
-        and conf[CFG_FILE_NAME][CFG_SECTION_NAME]
-        and conf[CFG_FILE_NAME][CFG_SECTION_NAME][CFG_REQUEST_TIMEOUT_OPTION_NAME]
+    local timeout = ((conf[CFG_FILE_NAME] or {})[CFG_SECTION_NAME] or {})[CFG_REQUEST_TIMEOUT_OPTION_NAME]
 
     fetcher.settings.open_meteo_api:set_request_timeout_in_seconds(timeout)
 
