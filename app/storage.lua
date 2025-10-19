@@ -91,7 +91,6 @@ end
 
 local function weather_upsert(bucket_id, place_name, point_in_time, expiration, weather_data)
     checks('number', 'string', 'datetime', 'datetime', 'table')
-    local place = box.space.place:get(place_name)
     box.space.weather:put({ place_name, bucket_id, point_in_time, expiration, weather_data })
     return true
 end
