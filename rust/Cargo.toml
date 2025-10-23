@@ -1,0 +1,11 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tarantool = "10.0.0"
+shors = "0.12.5"
+
+[lib]
+crate-type = ["cdylib"]
