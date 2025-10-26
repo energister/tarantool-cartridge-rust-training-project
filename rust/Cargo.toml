@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 tarantool = "10.0.0"
 shors = "0.12.5"
+form_urlencoded = "1.2.2"
+serde = "1.0.228"
 
 [lib]
 crate-type = ["cdylib"]
