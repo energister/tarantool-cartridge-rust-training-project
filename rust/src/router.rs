@@ -21,8 +21,7 @@ pub fn init_router() -> bool {
     server.register(Box::new(get_hello_route));
     server.register(Box::new(get_weather_route));
 
-    let lua = lua_state();
-    lua.exec("require('log').error('Hello')").unwrap();
+    log::error!("👋");
 
     true
 }
