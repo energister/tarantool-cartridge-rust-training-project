@@ -21,6 +21,16 @@ local function get_coordinates(place_name)
         place_name
     )
     local response = http_client.get(url, { timeout = settings.open_meteo_api.request_timeout_in_seconds })
+    
+    -- Log URL and HTTP status code for debugging
+    log.info("Open Meteo API request: URL=%s, HTTP_status=%s", url, tostring(response.status))
+    
+    -- Check for empty body before decoding
+    if response.body == nil or response.body == '' then
+        log.error("Open Meteo API returned empty body: URL=%s, HTTP_status=%s", url, tostring(response.status))
+        error(string.format("Open Meteo API returned empty body: URL=%s, HTTP_status=%s", url, tostring(response.status)))
+    end
+    
     local geo_data = response:decode()
     if geo_data['results'] == nil or #geo_data['results'] == 0 then
         -- place not found
@@ -41,6 +51,16 @@ local function get_weather(latitude, longitude)
         longitude
     )
     local response = http_client.get(url, {timeout = settings.open_meteo_api.request_timeout_in_seconds})
+    
+    -- Log URL and HTTP status code for debugging
+    log.info("Open Meteo API request: URL=%s, HTTP_status=%s", url, tostring(response.status))
+    
+    -- Check for empty body before decoding
+    if response.body == nil or response.body == '' then
+        log.error("Open Meteo API returned empty body: URL=%s, HTTP_status=%s", url, tostring(response.status))
+        error(string.format("Open Meteo API returned empty body: URL=%s, HTTP_status=%s", url, tostring(response.status)))
+    end
+    
     local response_data = response:decode()
     if response_data['current'] == nil then
         log.error("No current weather data for coordinates: %f,%f", latitude, longitude)
