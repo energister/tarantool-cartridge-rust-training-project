@@ -69,7 +69,7 @@ local function get_weather_for_place(bucket_id, place_name)
         -- place not found
         return {
             cached = true,
-            coordinates = {},
+            coordinates = nil,
             weather = nil,
         }
     end
