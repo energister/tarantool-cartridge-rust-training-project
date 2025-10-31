@@ -47,8 +47,9 @@ local function get_temperature(latitude, longitude)
 end
 
 g.test_weather_London = function(cg)
-    local time1, temperature1 = get_temperature(51.50853, -0.12574)
     local server = cg.cluster.main_server
+    
+    local time1, temperature1 = get_temperature(51.50853, -0.12574)
 
     --[[ Act ]]
     local response = server:http_request('get', '/weather?place=London')
