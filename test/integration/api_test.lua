@@ -136,3 +136,64 @@ g.test_cache_record_expiration = function(cg)
     local response2 = server:http_request('get', '/weather?place=' .. city)
     t.assert_equals(response2.headers['x-cache'], 'MISS')
 end
+
+local function set_request_timeout(server, timeout)
+    server.net_box:eval(string.format([[
+        local cartridge = require('cartridge')
+        local config = cartridge.config_get_deepcopy('custom_config') or {}
+        config.open_meteo_api = config.open_meteo_api or {}
+        config.open_meteo_api.request_timeout_in_seconds = %s
+        local ok, err = cartridge.config_patch_clusterwide({ custom_config = config })
+        if not ok then
+            error("Failed to apply configuration: " .. tostring(err))
+        end
+    ]], timeout))
+end
+
+g.test_coordinates_fatching_failure = function(cg)
+    local server = cg.cluster.main_server
+
+    -- simulate upstream unavailability
+    set_request_timeout(server, 0)
+
+    local response = server:http_request('get', '/weather?place=Tokyo', { raise = false })
+    t.assert_equals(response.status, 500)
+    t.assert_equals(response.body, 'Unexpected error while querying cache')
+
+    -- restore configuration to defaults
+    set_request_timeout(server, nil)
+end
+
+g.test_weather_fetching_failure = function(cg)
+    --t.skip('manual test: simulate upstream failure by blocking network requests to the upstream server')
+
+    local server = cg.cluster.main_server
+
+    -- cache coordinates first
+    server:http_request('get', '/weather?place=Vienna')
+
+    -- simulate weather expiration
+    for _, server in ipairs(cg.cluster:servers_by_role('app.roles.storage')) do
+        server.net_box:eval([[
+        if not box.cfg.read_only then
+            local space = box.space.weather
+            local expiration = require('datetime').now():sub({ seconds = 1 })
+            space:update('Vienna', {{'=', 4, expiration}})
+        end
+        ]])
+    end
+
+    -- simulate upstream unavailability
+    set_request_timeout(server, 0)
+
+    --[[ Act ]]
+    local response = server:http_request('get', '/weather?place=Vienna', { raise = false })
+    t.assert_equals(response.status, 503)
+    t.assert_equals(response.json['coordinates']['latitude'], 48.20849)
+    t.assert_equals(response.json['coordinates']['longitude'], 16.37208)
+    t.assert_equals(response.json['point_in_time'], nil)
+    t.assert_equals(response.json['temperature_celsius'], nil)
+
+    -- restore configuration to defaults
+    set_request_timeout(server, nil)
+end
