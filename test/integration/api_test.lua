@@ -137,11 +137,13 @@ g.test_cache_record_expiration = function(cg)
     t.assert_equals(response2.headers['x-cache'], 'MISS')
 end
 
-g.test_hello_world = function(cg)
+g.test_weather_upstream_failure = function(cg)
+    t.skip('manual test: simulate upstream failure by blocking network requests to the upstream server')
+
     local server = cg.cluster.main_server
-    local response = server:http_request('get', '/hello')
-    t.assert_equals(response.status, 200)
-    t.assert_equals(response.body, "Hello world!")
+    local response = server:http_request('get', '/weather?place=Tokyo', { raise = false })
+    t.assert_equals(response.status, 500)
+    t.assert_equals(response.body, 'Unexpected error while querying cache')
 end
 
 local function set_request_timeout(server, timeout)
