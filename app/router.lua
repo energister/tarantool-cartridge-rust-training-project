@@ -10,11 +10,11 @@ local function http_get_weather(req)
 
     local bucket_id = vshard.router.bucket_id_strcrc32(place_name)
     local storage_response, err = vshard.router.callrw(bucket_id, 'storage_api.get_weather_for_place', { bucket_id, place_name })
-    if storage_response == nil then
-        if err ~= nil then
-            log.error("Failed to request the storage: %s", err)
-        end
+    if err ~= nil then
+        log.error("Failed to request the storage: %s", err)
         return { status = 500, body = 'Unexpected error while querying cache' }
+    elseif storage_response == nil then
+        return { status = 503, body = "Open Meteo API is temporarily unavailable" }
     end
 
     local x_cache_header = { ['x-cache'] = storage_response.cached and 'HIT' or 'MISS' }

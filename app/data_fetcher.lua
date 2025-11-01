@@ -1,6 +1,7 @@
 local log = require('log')
 local http_client = require('http.client')
 local datetime = require('datetime')
+local checks = require('checks')
 
 local settings = {
     open_meteo_api = {
@@ -14,6 +15,19 @@ function settings.open_meteo_api:set_request_timeout_in_seconds(timeout)
     log.info("Set open_meteo_api.request_timeout_in_seconds to %s", tostring(self.request_timeout_in_seconds))
 end
 
+local function handle_fail(context, url, response)
+    checks('string', 'string', 'table')
+    if (response.status == 408 --[[ Request Timeout ]] or
+            response.status == 503 --[[ Service Unavailable ]]) then
+        log.debug("Failed to fetch %s: HTTP_status=%d", context, response.status)
+        return nil
+    else
+        log.error("Failed to fetch %s: HTTP_status=%d, URL=%s", context, response.status, url)
+        error(string.format("Failed to fetch %s from Open Meteo API", context))
+    end
+end
+
+---@return table|nil # empty means "not found", nil means "temporarily unavailable"
 local function get_coordinates(place_name)
     checks('string')
     local url = string.format(
@@ -22,11 +36,10 @@ local function get_coordinates(place_name)
     )
     local response = http_client.get(url, { timeout = settings.open_meteo_api.request_timeout_in_seconds })
 
-    -- Check for empty body before decoding
-    if response.body == nil then
-        log.error("Open Meteo API returned empty body: HTTP_status=%d, URL=%s", response.status, url)
-        error("Open Meteo API returned empty body")
+    if (response.status ~= 200) then
+        return handle_fail("coordinates", url, response)
     end
+
     local geo_data = response:decode()
 
     if geo_data['results'] == nil or #geo_data['results'] == 0 then
@@ -40,6 +53,7 @@ local function get_coordinates(place_name)
     }
 end
 
+---@return table|nil # nil means "temporarily unavailable"
 local function get_weather(latitude, longitude)
     checks('number', 'number')
     local url = string.format(
@@ -49,32 +63,11 @@ local function get_weather(latitude, longitude)
     )
     local response = http_client.get(url, {timeout = settings.open_meteo_api.request_timeout_in_seconds})
 
-    -- Check for empty body before decoding
-    if response.body == nil then
-        log.error("Open Meteo API returned empty body: HTTP_status=%d, URL=%s", response.status, url)
-        error("Open Meteo API returned empty body")
+    if (response.status ~= 200) then
+        return handle_fail("weather", url, response)
     end
+
     local response_data = response:decode()
-
-    if response_data['current'] == nil then
-        log.error("No current weather data for coordinates: %f,%f", latitude, longitude)
-        return nil
-    end
-
-    if response_data['current']['time'] == nil then
-        log.error("No 'time' field in the weather data for coordinates: %f,%f", latitude, longitude)
-        return nil
-    end
-
-    if response_data['current']['temperature'] == nil then
-        log.error("No 'temperature' field in the weather data for coordinates: %f,%f", latitude, longitude)
-        return nil
-    end
-
-    if response_data['current']['interval'] == nil then
-        log.error("No 'interval' field in the weather data for coordinates: %f,%f", latitude, longitude)
-        return nil
-    end
 
     local point_in_time = datetime.parse(response_data['current']['time'])
     local ttl_interval = datetime.interval.new({ sec = response_data['current']['interval'] })

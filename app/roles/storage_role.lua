@@ -10,6 +10,7 @@ local function init(opts)
     return true
 end
 
+---@return table|nil # nil if a known error occurred
 local function get_coordinates(bucket_id, place_name)
     checks('number', 'string')
 
@@ -19,8 +20,11 @@ local function get_coordinates(bucket_id, place_name)
     end
 
     local coordinates, err = cartridge.rpc_call('app.roles.data_fetcher', 'get_coordinates', { place_name })
-    if err ~= nil or coordinates == nil then
+    if err ~= nil then
         log.error("Failed to perform an RPC call to the data_fetcher.get_coordinates: %s", err)
+        error(err)
+    elseif coordinates == nil then
+        -- just failed to fetch coordinates because of a known error (e.g., network issue)
         return nil
     end
 
@@ -29,13 +33,17 @@ local function get_coordinates(bucket_id, place_name)
     return coordinates
 end
 
+---@return table|nil # nil if a known error occurred
 local function fetch_weather(bucket_id, place_name, coordinates)
     checks('number', 'string', 'table')
 
     local arguments = { coordinates.latitude, coordinates.longitude }
     local weather, err = cartridge.rpc_call('app.roles.data_fetcher', 'get_weather', arguments)
-    if err ~= nil or weather == nil then
+    if err ~= nil then
         log.error("Failed to perform an RPC call to the data_fetcher.get_weather: %s", err)
+        error(err)
+    elseif weather == nil then
+        -- just failed to fetch weather because of a known error (e.g., network issue)
         return nil
     end
 
@@ -45,6 +53,7 @@ local function fetch_weather(bucket_id, place_name, coordinates)
     return weather
 end
 
+---@return table|nil # nil if a known error occurred
 local function get_weather_for_place(bucket_id, place_name)
     checks('number', 'string')
 
@@ -63,7 +72,7 @@ local function get_weather_for_place(bucket_id, place_name)
 
     local coordinates = get_coordinates(bucket_id, place_name)
     if coordinates == nil then
-        -- failed to fetch coordinates
+        -- failed because of known error (e.g., network issue)
         return nil
     elseif next(coordinates) == nil then
         -- place not found
@@ -75,14 +84,10 @@ local function get_weather_for_place(bucket_id, place_name)
     end
 
     local weather = fetch_weather(bucket_id, place_name, coordinates)
-    if weather == nil then
-        -- failed to fetch weather
-        return nil
-    end
     return {
         cached = false,
         coordinates = coordinates,
-        weather = weather,
+        weather = weather,  -- might be nil
     }
 end
 

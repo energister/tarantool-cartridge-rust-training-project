@@ -157,20 +157,19 @@ g.test_coordinates_fatching_failure = function(cg)
     set_request_timeout(server, 0)
 
     local response = server:http_request('get', '/weather?place=Tokyo', { raise = false })
-    t.assert_equals(response.status, 500)
-    t.assert_equals(response.body, 'Unexpected error while querying cache')
+    t.assert_equals(response.status, 503)
+    t.assert_equals(response.body, 'Open Meteo API is temporarily unavailable')
 
     -- restore configuration to defaults
     set_request_timeout(server, nil)
 end
 
 g.test_weather_fetching_failure = function(cg)
-    --t.skip('manual test: simulate upstream failure by blocking network requests to the upstream server')
-
     local server = cg.cluster.main_server
+    local city = 'Vienna'
 
     -- cache coordinates first
-    server:http_request('get', '/weather?place=Vienna')
+    server:http_request('get', '/weather?place=' .. city)
 
     -- simulate weather expiration
     for _, server in ipairs(cg.cluster:servers_by_role('app.roles.storage')) do
@@ -187,7 +186,7 @@ g.test_weather_fetching_failure = function(cg)
     set_request_timeout(server, 0)
 
     --[[ Act ]]
-    local response = server:http_request('get', '/weather?place=Vienna', { raise = false })
+    local response = server:http_request('get', '/weather?place=' .. city, { raise = false })
     t.assert_equals(response.status, 503)
     t.assert_equals(response.json['coordinates']['latitude'], 48.20849)
     t.assert_equals(response.json['coordinates']['longitude'], 16.37208)
@@ -196,4 +195,13 @@ g.test_weather_fetching_failure = function(cg)
 
     -- restore configuration to defaults
     set_request_timeout(server, nil)
+end
+
+g.test_coordinates_fetching_unknown_failure = function(cg)
+    t.skip('manual test: simulate unexpected failure by adding error code to data_fetcher.lua')
+
+    local server = cg.cluster.main_server
+    local response = server:http_request('get', '/weather?place=Delhi', { raise = false })
+    t.assert_equals(response.status, 500)
+    t.assert_equals(response.body, 'Unexpected error while querying cache')
 end
