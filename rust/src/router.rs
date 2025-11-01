@@ -49,7 +49,7 @@ impl FailureHttpResponse {
 fn do_handle_request(request: &Request) -> Result<Response, FailureHttpResponse> {
     let place_name = extract_place_parameter(request)?;
     let bucket_id = calculate_bucket_id(&place_name)?;
-    let response: dto_storage::StorageResponse = call_storage(&bucket_id, &place_name)?;
+    let response: Option<dto_storage::StorageResponse> = call_storage(&bucket_id, &place_name)?;
     log::debug!("Response from storage: {:#?}", &response);
     Ok(convert_to_http_response(&place_name, &response))?
 }
@@ -74,7 +74,7 @@ fn calculate_bucket_id(place_name: &String) -> Result<u32, FailureHttpResponse> 
     )
 }
 
-fn call_storage(bucket_id: &u32, place_name: &String) -> Result<dto_storage::StorageResponse, FailureHttpResponse> {
+fn call_storage(bucket_id: &u32, place_name: &String) -> Result<Option<dto_storage::StorageResponse>, FailureHttpResponse> {
     let lua = lua_state();
 
     // TODO: make permanent (see shors call_shard as example)
@@ -85,7 +85,6 @@ fn call_storage(bucket_id: &u32, place_name: &String) -> Result<dto_storage::Sto
                 local res, err = require('vshard').router.callrw(bucket_id, function_name, arguments_as_table, {timeout = 2})
                 -- require('log').error("⚠️: %s", type(err))
 
-                assert(res, err)
                 if err ~= nil then
                     -- TODO: instead try to simply return both values in order not to log emtpy errors (which have already been logged in storage or data_fetcher)
                     error(err)
@@ -109,14 +108,21 @@ fn call_storage(bucket_id: &u32, place_name: &String) -> Result<dto_storage::Sto
         });
 }
 
-fn convert_to_http_response(place_name: &String, storage_response: &dto_storage::StorageResponse) -> Result<Response, FailureHttpResponse> {
-    let coordinates = storage_response.coordinates.as_ref().ok_or_else(|| {
+fn convert_to_http_response(place_name: &String, storage_response: &Option<dto_storage::StorageResponse>) -> Result<Response, FailureHttpResponse> {
+    let response = storage_response.as_ref().ok_or_else(||
+        // got Lua nil from storage
+        FailureHttpResponse::new(503, "Open Meteo API is temporarily unavailable")
+    )?;
+
+    let coordinates = response.coordinates.as_ref().ok_or_else(|| {
         FailureHttpResponse::new(404, &format!(r#"'{}' not found"#, &place_name))
     })?;
-    let weather_ref = storage_response.weather.as_ref().ok_or_else(|| {
+
+    let weather_ref = response.weather.as_ref().ok_or_else(|| {
         let msg = format!(r#"No weather for '{}'"#, place_name);
         FailureHttpResponse::new(404, msg)
     })?;
+
     let http_response = dto_api::HttpResponse {
         coordinates: dto_api::HttpCoordinates {
             latitude: coordinates.latitude,
@@ -129,7 +135,7 @@ fn convert_to_http_response(place_name: &String, storage_response: &dto_storage:
         status: 200,
         headers: HashMap::from([
             ("content-type".to_string(), "application/json; charset=utf8".to_string()),
-            ("x-cache".to_string(), (if storage_response.cached { "HIT" } else { "MISS" }).to_string()),
+            ("x-cache".to_string(), (if response.cached { "HIT" } else { "MISS" }).to_string()),
         ]),
         body: serde_json::to_vec(&http_response).unwrap(),
     })

@@ -137,15 +137,6 @@ g.test_cache_record_expiration = function(cg)
     t.assert_equals(response2.headers['x-cache'], 'MISS')
 end
 
-g.test_weather_upstream_failure = function(cg)
-    t.skip('manual test: simulate upstream failure by blocking network requests to the upstream server')
-
-    local server = cg.cluster.main_server
-    local response = server:http_request('get', '/weather?place=Tokyo', { raise = false })
-    t.assert_equals(response.status, 500)
-    t.assert_equals(response.body, 'Unexpected error while querying cache')
-end
-
 local function set_request_timeout(server, timeout)
     server.net_box:eval(string.format([[
         local cartridge = require('cartridge')
