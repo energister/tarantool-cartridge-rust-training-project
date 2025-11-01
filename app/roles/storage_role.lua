@@ -22,7 +22,7 @@ local function get_coordinates(bucket_id, place_name)
     local coordinates, err = cartridge.rpc_call('app.roles.data_fetcher', 'get_coordinates', { place_name })
     if err ~= nil then
         log.error("Failed to perform an RPC call to the data_fetcher.get_coordinates: %s", err)
-        error(err)
+        error("Failed to perform an RPC call to the data_fetcher.get_coordinates")
     elseif coordinates == nil then
         -- just failed to fetch coordinates because of a known error (e.g., network issue)
         return nil
@@ -41,7 +41,7 @@ local function fetch_weather(bucket_id, place_name, coordinates)
     local weather, err = cartridge.rpc_call('app.roles.data_fetcher', 'get_weather', arguments)
     if err ~= nil then
         log.error("Failed to perform an RPC call to the data_fetcher.get_weather: %s", err)
-        error(err)
+        error("Failed to perform an RPC call to the data_fetcher.get_weather")
     elseif weather == nil then
         -- just failed to fetch weather because of a known error (e.g., network issue)
         return nil

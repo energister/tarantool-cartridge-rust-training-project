@@ -198,7 +198,16 @@ g.test_weather_fetching_failure = function(cg)
 end
 
 g.test_coordinates_fetching_unknown_failure = function(cg)
-    t.skip('manual test: simulate unexpected failure by adding error code to data_fetcher.lua')
+    t.skip('manual test: simulate unexpected failure while fetching coordinates by adding error to data_fetcher.lua')
+
+    local server = cg.cluster.main_server
+    local response = server:http_request('get', '/weather?place=Delhi', { raise = false })
+    t.assert_equals(response.status, 500)
+    t.assert_equals(response.body, 'Unexpected error while querying cache')
+end
+
+g.test_weather_fetching_unknown_failure = function(cg)
+    t.skip('manual test: simulate unexpected failure while fetching weather by adding error to data_fetcher.lua')
 
     local server = cg.cluster.main_server
     local response = server:http_request('get', '/weather?place=Delhi', { raise = false })
