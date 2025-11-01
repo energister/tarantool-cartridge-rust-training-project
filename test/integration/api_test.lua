@@ -48,7 +48,7 @@ end
 
 g.test_weather_London = function(cg)
     local server = cg.cluster.main_server
-    
+
     local time1, temperature1 = get_temperature(51.50853, -0.12574)
 
     --[[ Act ]]
@@ -135,6 +135,13 @@ g.test_cache_record_expiration = function(cg)
     -- next request after cache expiration is served from the upstream server again
     local response2 = server:http_request('get', '/weather?place=' .. city)
     t.assert_equals(response2.headers['x-cache'], 'MISS')
+end
+
+g.test_hello_world = function(cg)
+    local server = cg.cluster.main_server
+    local response = server:http_request('get', '/hello')
+    t.assert_equals(response.status, 200)
+    t.assert_equals(response.body, "Hello world!")
 end
 
 local function set_request_timeout(server, timeout)
