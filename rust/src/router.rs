@@ -106,10 +106,7 @@ fn call_storage(bucket_id: &u32, place_name: &String) -> Result<dto_storage::Sto
         .map_err(|e| {
             log::error!("Failed to request the storage: {}", e);
             FailureHttpResponse::new(500, "Unexpected error while querying cache")
-        })
-        .map(|resp| {
-            Ok(resp)
-        })?;
+        });
 }
 
 fn convert_to_http_response(place_name: &String, storage_response: &dto_storage::StorageResponse) -> Result<Response, FailureHttpResponse> {
