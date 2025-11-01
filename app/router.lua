@@ -24,13 +24,11 @@ local function http_get_weather(req)
         local response = { coordinates = storage_response.coordinates }
         return { status = 503, headers = x_cache_header, body = json.encode(response) }
     else
-        local response = { coordinates = storage_response.coordinates }
-        do
-            local weather = storage_response.weather
-            
-            response.point_in_time = weather.point_in_time
-            response.temperature_celsius = weather.temperature_celsius
-        end
+        local response = {
+            coordinates = storage_response['coordinates'],
+            point_in_time = storage_response['weather']['point_in_time'],
+            temperature_celsius = storage_response['weather']['temperature_celsius']
+        }
         return { status = 200, headers = x_cache_header, body = json.encode(response) }
     end
 end
