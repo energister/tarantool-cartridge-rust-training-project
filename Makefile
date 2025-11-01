@@ -2,6 +2,7 @@
 
 build:  ## Build the project
 	cartridge build
+	cargo build
 
 dev: setup  ## Shortcut for setting up dev environment
 
