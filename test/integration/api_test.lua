@@ -199,6 +199,7 @@ end
 
 g.test_coordinates_fetching_unknown_failure = function(cg)
     t.skip('manual test: simulate unexpected failure while fetching coordinates by adding error to data_fetcher.lua')
+    -- One way to automate this test is to set target upstream URL to some invalid value via cluster config to get unexpected response
 
     local server = cg.cluster.main_server
     local response = server:http_request('get', '/weather?place=Delhi', { raise = false })
@@ -208,6 +209,7 @@ end
 
 g.test_weather_fetching_unknown_failure = function(cg)
     t.skip('manual test: simulate unexpected failure while fetching weather by adding error to data_fetcher.lua')
+    -- One way to automate this test is to set target upstream URL to some invalid value via cluster config to get unexpected response
 
     local server = cg.cluster.main_server
     local response = server:http_request('get', '/weather?place=Delhi', { raise = false })
