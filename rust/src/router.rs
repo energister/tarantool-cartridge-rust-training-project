@@ -118,9 +118,17 @@ fn convert_to_http_response(place_name: &String, storage_response: &Option<dto_s
         FailureHttpResponse::new(404, &format!(r#"'{}' not found"#, &place_name))
     })?;
 
-    let weather_ref = response.weather.as_ref().ok_or_else(|| {
-        let msg = format!(r#"No weather for '{}'"#, place_name);
-        FailureHttpResponse::new(404, msg)
+    let weather = response.weather.as_ref().ok_or_else(|| {
+        let http_response = dto_api::HttpResponse {
+            coordinates: dto_api::HttpCoordinates {
+                latitude: coordinates.latitude,
+                longitude: coordinates.longitude,
+            },
+            point_in_time: None,
+            temperature_celsius: None,
+        };
+        let json = serde_json::to_string(&http_response).unwrap();
+        FailureHttpResponse::new(503, json)
     })?;
 
     let http_response = dto_api::HttpResponse {
@@ -128,8 +136,8 @@ fn convert_to_http_response(place_name: &String, storage_response: &Option<dto_s
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
         },
-        point_in_time: format_date_time(&weather_ref.point_in_time),
-        temperature_celsius: weather_ref.temperature_celsius,
+        point_in_time: Some(format_date_time(&weather.point_in_time)),
+        temperature_celsius: Some(weather.temperature_celsius),
     };
     Ok(Response {
         status: 200,

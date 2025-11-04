@@ -41,7 +41,9 @@ local function get_temperature(latitude, longitude)
         tostring(latitude),
         tostring(longitude)
     )
-    local data = http_client.get(url):decode()
+    local response = http_client.get(url)
+    t.assert_equals(response.status, 200)
+    local data = response:decode()
     return tostring(datetime.parse(data['current']['time'])),
         data['current']['temperature']
 end
