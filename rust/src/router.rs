@@ -82,16 +82,18 @@ fn call_storage(bucket_id: &u32, place_name: &String) -> Result<Option<dto_stora
         .eval(r#"
             return function(bucket_id, function_name, arguments_as_table)
                 require('checks').checks('number', 'string', 'table')
-                local res, err = require('vshard').router.callrw(bucket_id, function_name, arguments_as_table, {timeout = 2})
+                local storage_response, err = require('vshard').router.callrw(bucket_id, function_name, arguments_as_table, {timeout = 5})
                 -- require('log').error("⚠️: %s", type(err))
 
+                --[[ Don't use assert() here, because storage_response might be nil,
+                which should be processed as a special case (an error that is already handled in the storage)
+                ]]
                 if err ~= nil then
-                    -- TODO: instead try to simply return both values in order not to log emtpy errors (which have already been logged in storage or data_fetcher)
                     error(err)
                 end
 
-                -- require('log').error("👀: %s", require('json').encode(res))
-                return res
+                -- require('log').error("👀: %s", require('json').encode(storage_response))
+                return storage_response
             end"#,
         )
         .map_err(|e| {
