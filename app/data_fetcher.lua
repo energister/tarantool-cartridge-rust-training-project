@@ -19,10 +19,10 @@ local function handle_fail(context, url, response)
     checks('string', 'string', 'table')
     if (response.status == 408 --[[ Request Timeout ]] or
             response.status == 503 --[[ Service Unavailable ]]) then
-        log.debug("Failed to fetch %s: HTTP_status=%d", context, response.status)
+        log.debug("Failed to fetch '%s': HTTP_status_code=%d", context, response.status)
         return nil
     else
-        log.error("Failed to fetch %s: HTTP_status=%d, URL=%s", context, response.status, url)
+        log.error("Failed to fetch '%s': HTTP_status_code=%d (%s), URL=%s", context, response.status, response.reason, url)
         error(string.format("Failed to fetch %s from Open Meteo API", context))
     end
 end
