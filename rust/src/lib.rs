@@ -2,7 +2,6 @@ mod router;
 mod dto_storage;
 mod dto_api;
 mod data_fetcher;
-mod dto_data_fetcher;
 
 use tarantool::ffi::lua as ffi_lua;
 use tarantool::tlua::AsLua;

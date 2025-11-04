@@ -1,9 +1,12 @@
-use std::time::Duration;
 use fibreq::Response;
 use serde::Deserialize;
-use crate::dto_data_fetcher;
 
-pub fn get_coordinates(place_name: String) -> Result<Option<dto_data_fetcher::Coordinates>, Box<dyn std::error::Error>> {
+pub mod dto;
+pub mod settings;
+
+pub use settings::SETTINGS;
+
+pub fn get_coordinates(place_name: String) -> Result<Option<dto::Coordinates>, Box<dyn std::error::Error>> {
     let url = format!("https://geocoding-api.open-meteo.com/v1/search?name={}&count=1&language=en&format=json", place_name);
 
     #[derive(Deserialize)]
@@ -20,7 +23,7 @@ pub fn get_coordinates(place_name: String) -> Result<Option<dto_data_fetcher::Co
     let client = fibreq::ClientBuilder::new().build();
     let http_req = client.get(&url)?;
     let mut response = http_req
-        .request_timeout(Duration::from_secs(5))
+        .request_timeout(SETTINGS.open_meteo_api.request_timeout)
         .send()?;
 
     if response.status() != 200 {
@@ -34,18 +37,20 @@ pub fn get_coordinates(place_name: String) -> Result<Option<dto_data_fetcher::Co
         .and_then(|results| results.first());
 
     match first_result {
-        Some(result) => Ok(Some(dto_data_fetcher::Coordinates {
-            latitude: Some(result.latitude),
-            longitude: Some(result.longitude),
-        })),
-        None => Ok(Some(dto_data_fetcher::Coordinates {
-            latitude: None,
-            longitude: None,
-        }))
+        Some(result) =>
+            Ok(Some(dto::Coordinates {
+                latitude: Some(result.latitude),
+                longitude: Some(result.longitude),
+            })),
+        None =>  // place not found
+            Ok(Some(dto::Coordinates {
+                latitude: None,
+                longitude: None,
+            }))
     }
 }
 
-fn handle_fail(context: &str, url: &str, response: &Response) -> Result<Option<dto_data_fetcher::Coordinates>, Box<dyn std::error::Error>> {
+fn handle_fail(context: &str, url: &str, response: &Response) -> Result<Option<dto::Coordinates>, Box<dyn std::error::Error>> {
     if response.status() == 408 /* Request Timeout */ ||
         response.status() == 503 /* Service Unavailable */ {
         log::debug!("Failed to fetch '{}': HTTP_status_code={}", context, response.status());
