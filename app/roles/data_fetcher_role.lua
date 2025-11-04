@@ -1,5 +1,6 @@
 -- Role: data_fetcher
 -- Purpose: Encapsulate interactions with the remote server API (https://open-meteo.com/)
+local rust = require('librust')
 local log = require('log')
 local fetcher = require('app.data_fetcher')
 
@@ -32,6 +33,6 @@ return {
     role_name = 'app.roles.data_fetcher',
     validate_config = validate_config,
     apply_config = apply_config,
-    get_coordinates = fetcher.get_coordinates,
+    get_coordinates = rust.get_coordinates,
     get_weather = fetcher.get_weather,
 }
