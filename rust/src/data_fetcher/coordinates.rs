@@ -3,12 +3,12 @@ use crate::data_fetcher;
 use crate::data_fetcher::dto;
 use crate::data_fetcher::settings::SETTINGS;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct GeocodingResponse {
     results: Option<Vec<GeocodingResult>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct GeocodingResult {
     latitude: f64,
     longitude: f64,
@@ -23,12 +23,15 @@ pub fn get_coordinates(place_name: String) -> Result<Option<dto::Coordinates>, B
         .request_timeout(SETTINGS.open_meteo_api.get_request_timeout())
         .send();
 
-    let response = data_fetcher::handle_errors(response_result)?;
+    let response = data_fetcher::handle_errors("coordinates", &url, response_result)?;
     let geo_data: Option<GeocodingResponse> = response
         .map(|mut r| r.json())
-        .transpose()?;
+        .transpose()
+        .inspect_err(
+            |e| log::error!("Failed to deserialize 'coordinates' response: {}. URL={}", e, &url)
+        )?;
 
-    return Ok(geo_data.map(convert));
+    Ok(geo_data.map(convert))
 }
 
 fn convert(geo_data: GeocodingResponse) -> dto::Coordinates {

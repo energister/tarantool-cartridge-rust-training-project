@@ -10,13 +10,13 @@ pub mod settings;
 pub mod coordinates;
 
 /// Returns `None` in case of known transient errors
-fn handle_errors(response: Result<Response, Box<fibreq::Error>>) -> Result<Option<Response>, Box<dyn std::error::Error>> {
+fn handle_errors(context: &str, url: &String, response: Result<Response, Box<fibreq::Error>>) -> Result<Option<Response>, Box<dyn std::error::Error>> {
     match response {
         Ok(resp) => {
             if resp.status() == 200 {
                 Ok(Some(resp))
             } else {
-                handle_fail("coordinates", &resp)
+                handle_fail(context, &resp)
             }
         },
         Err(e) => {
@@ -24,6 +24,7 @@ fn handle_errors(response: Result<Response, Box<fibreq::Error>>) -> Result<Optio
                 log::debug!("Timeout while fetching 'coordinates'");
                 Ok(None)
             } else {
+                log::error!("Failed to fetch '{}': URL={}", context, url);
                 Err(e)
             }
         }
