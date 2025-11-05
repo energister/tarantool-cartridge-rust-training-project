@@ -24,7 +24,7 @@ pub unsafe extern "C" fn luaopen_librust(l: *mut ffi_lua::lua_State) -> i32 {
         let table = as_table! {
             "init_router" => tlua::Function::new(router::init_router),
             "data_fetcher" => as_table! {
-                "get_coordinates" => tlua::Function::new(data_fetcher::get_coordinates),
+                "get_coordinates" => tlua::Function::new(data_fetcher::coordinates::get_coordinates),
                 "set_request_timeout_in_seconds" => tlua::Function::new(data_fetcher::settings::set_request_timeout),
             }
         };
