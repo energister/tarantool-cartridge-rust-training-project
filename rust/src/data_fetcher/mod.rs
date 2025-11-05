@@ -31,28 +31,17 @@ pub fn get_coordinates(place_name: String) -> Result<Option<dto::Coordinates>, B
         .request_timeout(SETTINGS.open_meteo_api.get_request_timeout())
         .send();
 
-    let mut response = match response_result {
-        Ok(resp) => resp,
-        Err(e) => {
-            return if matches!(*e, fibreq::Error::Timeout) {
-                log::debug!("Timeout while fetching 'coordinates'");
-                Ok(None)
-            } else {
-                Err(Box::new(e))
-            }
-        }
-    };
+    let response = handle_errors(response_result)?;
+    let geo_data: Option<GeocodingResponse> = response
+        .map(|mut r| r.json())
+        .transpose()?;
 
-    if response.status() != 200 {
-        return handle_fail("coordinates", &response);
-    }
+    return Ok(geo_data.map(convert));
 
-    let geo_data: GeocodingResponse = response.json()?;
+    fn convert(geo_data: GeocodingResponse) -> dto::Coordinates {
+        let first_result = geo_data.results.as_ref()
+            .and_then(|results| results.first());
 
-    let first_result = geo_data.results.as_ref()
-        .and_then(|results| results.first());
-
-    Ok(Some(
         first_result
             .map(|result|
                 dto::Coordinates {
@@ -67,10 +56,31 @@ pub fn get_coordinates(place_name: String) -> Result<Option<dto::Coordinates>, B
                     longitude: None,
                 }
             )
-    ))
+    }
 }
 
-fn handle_fail(context: &str, response: &Response) -> Result<Option<dto::Coordinates>, Box<dyn std::error::Error>> {
+/// Returns `None` in case of known transient errors
+fn handle_errors(response: Result<Response, Box<fibreq::Error>>) -> Result<Option<Response>, Box<dyn std::error::Error>> {
+    match response {
+        Ok(resp) => {
+            if resp.status() == 200 {
+                Ok(Some(resp))
+            } else {
+                handle_fail("coordinates", &resp)
+            }
+        },
+        Err(e) => {
+            if matches!(*e, fibreq::Error::Timeout) {
+                log::debug!("Timeout while fetching 'coordinates'");
+                Ok(None)
+            } else {
+                Err(e)
+            }
+        }
+    }
+}
+
+fn handle_fail(context: &str, response: &Response) -> Result<Option<Response>, Box<dyn std::error::Error>> {
     if response.status() == 408 /* Request Timeout */ ||
         response.status() == 503 /* Service Unavailable */ {
         log::debug!("Timeout while fetching '{}': HTTP_status_code={}", context, response.status());
