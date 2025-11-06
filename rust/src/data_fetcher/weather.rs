@@ -5,7 +5,7 @@ use crate::data_fetcher::settings::SETTINGS;
 
 #[derive(Deserialize, Debug)]
 struct MeteoApiWeatherResponse {
-    timezone_abbreviation: String,
+    utc_offset_seconds: i32,
     current: MeteoApiCurrentWeather,
 }
 
@@ -38,29 +38,24 @@ pub fn get_weather(latitude: f64, longitude: f64) -> Result<Option<dto::Weather>
 }
 
 fn convert(data: MeteoApiWeatherResponse) -> Result<dto::Weather, Box<dyn std::error::Error>> {
+    let offset = time::UtcOffset::from_whole_seconds(data.utc_offset_seconds)?;
+
     let point_in_time =
+        // TODO: add &timeformat=unixtime to the URL to simplify parsing. See https://open-meteo.com/en/docs#api_documentation
         time::PrimitiveDateTime::parse(&data.current.time, &time::format_description::well_known::Iso8601::DATE_TIME)
-        .map(|primitive| {
-            // at the moment this works even for Non-European countries
-            if data.timezone_abbreviation == "GMT" {
-                Ok(primitive.assume_offset(time::UtcOffset::UTC))
-            } else {
-                Err(Box::new(std::io::Error::new(
+            .map_err(|e: time::error::Parse| {
+                log::error!("Unexpected time format in Meteo API response ({}): {}", data.current.time, e);
+                std::io::Error::new(
                     std::io::ErrorKind::Other,
-                    format!("Unexpected timezone while parsing Open Meteo API response: {}", data.timezone_abbreviation)
-                )))
-            }
-        })
-        .map_err(|e: time::error::Parse| {
-            log::error!("Unexpected time format in Meteo API response ({}): {}", data.current.time, e);
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Unexpected error while parsing Open Meteo API response".to_string(),
-            )
-        })??;
+                    "Unexpected error while parsing Open Meteo API response".to_string(),
+                )
+            })
+            .map(|primitive|
+                primitive.assume_offset(offset)
+            )?;
 
     let ttl = time::Duration::seconds(data.current.interval);
-    
+
     Ok(dto::Weather {
         point_in_time: point_in_time.into(),
         expiration: (point_in_time + ttl).into(),
