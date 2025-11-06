@@ -4,12 +4,12 @@ use crate::data_fetcher::dto;
 use crate::data_fetcher::settings::SETTINGS;
 
 #[derive(Deserialize, Debug)]
-struct GeocodingResponse {
-    results: Option<Vec<GeocodingResult>>,
+struct MeteoApiGeocodingResponse {
+    results: Option<Vec<MeteoApiCoordinates>>,
 }
 
 #[derive(Deserialize, Debug)]
-struct GeocodingResult {
+struct MeteoApiCoordinates {
     latitude: f64,
     longitude: f64,
 }
@@ -24,7 +24,7 @@ pub fn get_coordinates(place_name: String) -> Result<Option<dto::Coordinates>, B
         .send();
 
     let response = data_fetcher::handle_errors("coordinates", &url, response_result)?;
-    let geo_data: Option<GeocodingResponse> = response
+    let geo_data: Option<MeteoApiGeocodingResponse> = response
         .map(|mut r| r.json())
         .transpose()
         .inspect_err(
@@ -34,7 +34,7 @@ pub fn get_coordinates(place_name: String) -> Result<Option<dto::Coordinates>, B
     Ok(geo_data.map(convert))
 }
 
-fn convert(geo_data: GeocodingResponse) -> dto::Coordinates {
+fn convert(geo_data: MeteoApiGeocodingResponse) -> dto::Coordinates {
     let first_result = geo_data.results.as_ref()
         .and_then(|results| results.first());
 

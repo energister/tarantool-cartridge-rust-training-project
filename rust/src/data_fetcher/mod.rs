@@ -8,6 +8,7 @@ use fibreq::Response;
 pub mod dto;
 pub mod settings;
 pub mod coordinates;
+pub mod weather;
 
 /// Returns `None` in case of known transient errors
 fn handle_errors(context: &str, url: &String, response: Result<Response, Box<fibreq::Error>>) -> Result<Option<Response>, Box<dyn std::error::Error>> {

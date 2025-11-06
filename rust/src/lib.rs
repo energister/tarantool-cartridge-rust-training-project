@@ -25,6 +25,7 @@ pub unsafe extern "C" fn luaopen_librust(l: *mut ffi_lua::lua_State) -> i32 {
             "init_router" => tlua::Function::new(router::init_router),
             "data_fetcher" => as_table! {
                 "get_coordinates" => tlua::Function::new(data_fetcher::coordinates::get_coordinates),
+                "get_weather" => tlua::Function::new(data_fetcher::weather::get_weather),
                 "set_request_timeout_in_seconds" => tlua::Function::new(data_fetcher::settings::set_request_timeout),
             }
         };

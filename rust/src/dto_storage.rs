@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use tarantool::datetime::Datetime;
 use tarantool::tlua::LuaRead;
+use crate::data_fetcher::dto::Weather;
 
 #[derive(Debug, Serialize, Deserialize, LuaRead)]
 pub struct StorageResponse {
@@ -13,11 +13,4 @@ pub struct StorageResponse {
 pub struct Coordinates {
     pub longitude: f64,
     pub latitude: f64,
-}
-
-#[derive(Debug, Serialize, Deserialize, LuaRead)]
-pub struct Weather {
-    pub point_in_time: Datetime,
-    pub expiration: Datetime,
-    pub temperature_celsius: f64,
 }
