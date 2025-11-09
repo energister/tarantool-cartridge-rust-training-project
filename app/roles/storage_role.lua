@@ -1,3 +1,4 @@
+local rust = require('librust')
 local storage = require('app.storage')
 local checks = require('checks')
 local cartridge = require('cartridge')
@@ -5,7 +6,11 @@ local log = require('log')
 local datetime = require('datetime')
 
 local function init(opts)
-    storage.create_spaces(opts.is_master)
+    if (opts.is_master) then
+        rust.storage.init()
+    end
+
+    -- storage.create_spaces(opts.is_master)
 
     return true
 end

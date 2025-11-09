@@ -1,7 +1,7 @@
 mod router;
-mod dto_storage;
 mod dto_api;
 mod data_fetcher;
+mod storage;
 
 use tarantool::ffi::lua as ffi_lua;
 use tarantool::tlua::AsLua;
@@ -27,6 +27,9 @@ pub unsafe extern "C" fn luaopen_librust(l: *mut ffi_lua::lua_State) -> i32 {
                 "get_coordinates" => tlua::Function::new(data_fetcher::coordinates::get_coordinates),
                 "get_weather" => tlua::Function::new(data_fetcher::weather::get_weather),
                 "set_request_timeout_in_seconds" => tlua::Function::new(data_fetcher::settings::set_request_timeout),
+            },
+            "storage" => as_table! {
+                "init" => tlua::Function::new(storage::init),
             }
         };
         let guard = (&lua).push(table);
