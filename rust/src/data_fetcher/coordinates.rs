@@ -14,7 +14,7 @@ struct MeteoApiCoordinates {
     longitude: f64,
 }
 
-pub fn get_coordinates(place_name: String) -> Result<Option<dto::Coordinates>, Box<dyn std::error::Error>> {
+pub fn get_coordinates(place_name: String) -> Result<Option<dto::CoordinatesResponse>, Box<dyn std::error::Error>> {
     let url = format!("https://geocoding-api.open-meteo.com/v1/search?name={}&count=1&language=en&format=json", place_name);
 
     let client = fibreq::ClientBuilder::new().build();
@@ -34,22 +34,17 @@ pub fn get_coordinates(place_name: String) -> Result<Option<dto::Coordinates>, B
     Ok(geo_data.map(convert))
 }
 
-fn convert(geo_data: MeteoApiGeocodingResponse) -> dto::Coordinates {
+fn convert(geo_data: MeteoApiGeocodingResponse) -> dto::CoordinatesResponse {
     let first_result = geo_data.results.as_ref()
         .and_then(|results| results.first());
 
-    first_result
-        .map(|result|
+    let coordinates = first_result
+        .map(|result| {
             dto::Coordinates {
-                latitude: Some(result.latitude),
-                longitude: Some(result.longitude),
+                latitude: result.latitude,
+                longitude: result.longitude,
             }
-        )
-        .unwrap_or(
-            // place not found
-            dto::Coordinates {
-                latitude: None,
-                longitude: None,
-            }
-        )
+        });
+
+    dto::CoordinatesResponse { coordinates }
 }
