@@ -83,10 +83,12 @@ end
 local function weather_get(place_name)
     checks('string')
     local stored = box.space.weather:get(place_name)
-    return stored and {
-        expiration = stored.expiration,
-        weather_data = stored.weather_data
-    }
+    if stored then
+        stored.weather_data.expiration = stored.expiration
+        return stored.weather_data
+    else
+        return nil
+    end
 end
 
 local function weather_upsert(bucket_id, place_name, point_in_time, expiration, weather_data)

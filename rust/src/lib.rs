@@ -30,6 +30,8 @@ pub unsafe extern "C" fn luaopen_librust(l: *mut ffi_lua::lua_State) -> i32 {
             },
             "storage" => as_table! {
                 "init" => tlua::Function::new(storage::init),
+                "weather_upsert" => tlua::Function::new(storage::weather_storage::weather_upsert),
+                "weather_get" => tlua::Function::new(storage::weather_storage::weather_get),
             }
         };
         let guard = (&lua).push(api);

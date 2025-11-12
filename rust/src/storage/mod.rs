@@ -1,6 +1,6 @@
 pub mod dto;
 mod place_storage;
-mod weather_storage;
+pub mod weather_storage;
 
 use crate::data_fetcher;
 
