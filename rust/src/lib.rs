@@ -21,7 +21,7 @@ pub unsafe extern "C" fn luaopen_librust(l: *mut ffi_lua::lua_State) -> i32 {
 
         shors::init_lua_functions(&lua).unwrap();
 
-        let table = as_table! {
+        let api = as_table! {
             "init_router" => tlua::Function::new(router::init_router),
             "data_fetcher" => as_table! {
                 "get_coordinates" => tlua::Function::new(data_fetcher::coordinates::get_coordinates),
@@ -32,7 +32,7 @@ pub unsafe extern "C" fn luaopen_librust(l: *mut ffi_lua::lua_State) -> i32 {
                 "init" => tlua::Function::new(storage::init),
             }
         };
-        let guard = (&lua).push(table);
+        let guard = (&lua).push(api);
         guard.forget()
     }
 }
