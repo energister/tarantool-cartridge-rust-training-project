@@ -4,6 +4,8 @@ use tarantool::datetime::Datetime;
 use tarantool::space::{FieldType, Space};
 use tarantool::tuple::Tuple;
 
+const SPACE_NAME: &str = "weather";
+
 #[derive(Debug, Serialize, Deserialize)]
 struct WeatherTuple {
     place_name: String,
@@ -19,7 +21,7 @@ pub fn init() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn create_weather_space() -> Result<(), Box<dyn std::error::Error>> {
-    let weather = Space::builder("weather")
+    let weather = Space::builder(SPACE_NAME)
         .format([
             ("place_name", FieldType::String),
             ("bucket_id", FieldType::Unsigned),
@@ -54,18 +56,18 @@ pub fn weather_upsert(bucket_id: u32, place_name: String, point_in_time: Datetim
         weather_data: weather,
     };
 
-    Space::find("weather")
-        .ok_or("Can't find space 'weather'")?
+    Space::find(SPACE_NAME)
+        .ok_or(format!("Can't find space '{SPACE_NAME}'"))?
         .put(&tuple)
         .map_err(|e| {
-            log::error!("Error while storing 'weather': {e:?}");
+            log::error!("Error while storing into '{SPACE_NAME}': {e:?}");
             e.into()
         })
 }
 
 pub fn weather_get(place_name: String) -> Result<Option<data_fetcher::dto::Weather>, Box<dyn std::error::Error>> {
-    let maybe_stored = Space::find("weather")
-        .ok_or("Can't find space 'weather'")?
+    let maybe_stored = Space::find(SPACE_NAME)
+        .ok_or(format!("Can't find space '{SPACE_NAME}'"))?
         .get(&(place_name,))?
         .map(|record| record.decode::<WeatherTuple>())
         .transpose()? // Option<Result<WeatherTuple, _>> -> Result<Option<WeatherTuple>, _>

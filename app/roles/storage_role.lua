@@ -19,7 +19,7 @@ end
 local function get_coordinates(bucket_id, place_name)
     checks('number', 'string')
 
-    local stored = storage.coordinates_get(place_name)
+    local stored = rust.storage.coordinates_get(place_name)
     if stored ~= nil then
         return stored
     end
@@ -36,7 +36,7 @@ local function get_coordinates(bucket_id, place_name)
     local coordinates = response.coordinates or {}
 
     -- cache the response
-    storage.coordinates_put(bucket_id, place_name, coordinates)
+    assert(rust.storage.coordinates_put(bucket_id, place_name, coordinates))
     return coordinates
 end
 
@@ -70,7 +70,7 @@ local function get_weather_for_place(bucket_id, place_name)
         return {
             cached = true,
             -- coordinates are guaranteed to be cached when the weather is cached
-            coordinates = storage.coordinates_get(place_name),
+            coordinates = rust.storage.coordinates_get(place_name),
             weather = stored_weather
         }
     end
@@ -82,7 +82,7 @@ local function get_weather_for_place(bucket_id, place_name)
         -- failed because of known error (e.g., network issue)
         return nil
     elseif next(coordinates) == nil then
-        -- place not found
+        -- place is not listed in the geo database
         return {
             cached = true,
             coordinates = nil,
