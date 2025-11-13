@@ -11,7 +11,7 @@ pub struct StorageResponse {
     pub cached: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, LuaRead, PushInto)]
+#[derive(Debug, Clone, Serialize, Deserialize, LuaRead, PushInto)]
 pub struct Coordinates {
     pub longitude: f64,
     pub latitude: f64,

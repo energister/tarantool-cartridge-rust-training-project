@@ -30,10 +30,7 @@ pub unsafe extern "C" fn luaopen_librust(l: *mut ffi_lua::lua_State) -> i32 {
             },
             "storage" => as_table! {
                 "init" => tlua::Function::new(storage::init),
-                "coordinates_put" => tlua::Function::new(storage::place_storage::coordinates_put),
-                "coordinates_get" => tlua::Function::new(storage::place_storage::coordinates_get),
-                "weather_upsert" => tlua::Function::new(storage::weather_storage::weather_upsert),
-                "weather_get" => tlua::Function::new(storage::weather_storage::weather_get),
+                "get_weather_for_place" => tlua::Function::new(storage::get_weather_for_place),
             }
         };
         let guard = (&lua).push(api);

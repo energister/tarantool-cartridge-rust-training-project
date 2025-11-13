@@ -13,7 +13,7 @@ pub struct Coordinates {
     pub longitude: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize, LuaRead, PushInto)]
+#[derive(Debug, Clone, Serialize, Deserialize, LuaRead, PushInto)]
 pub struct Weather {
     pub point_in_time: Datetime,
     pub expiration: Datetime,

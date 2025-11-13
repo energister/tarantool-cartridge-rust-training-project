@@ -19,7 +19,7 @@ end
 local function get_coordinates(bucket_id, place_name)
     checks('number', 'string')
 
-    local stored = rust.storage.coordinates_get(place_name)
+    local stored = storage.coordinates_get(place_name)
     if stored ~= nil then
         return stored
     end
@@ -36,7 +36,7 @@ local function get_coordinates(bucket_id, place_name)
     local coordinates = response.coordinates or {}
 
     -- cache the response
-    assert(rust.storage.coordinates_put(bucket_id, place_name, coordinates))
+    assert(storage.coordinates_put(bucket_id, place_name, coordinates))
     return coordinates
 end
 
@@ -55,7 +55,7 @@ local function fetch_weather(bucket_id, place_name, coordinates)
     end
 
     -- cache the response
-    assert(rust.storage.weather_upsert(bucket_id, place_name, weather.point_in_time, weather.expiration, weather))
+    assert(storage.weather_upsert(bucket_id, place_name, weather.point_in_time, weather.expiration, weather))
 
     return weather
 end
@@ -64,13 +64,13 @@ end
 local function get_weather_for_place(bucket_id, place_name)
     checks('number', 'string')
 
-    local stored_weather = rust.storage.weather_get(place_name)
+    local stored_weather = storage.weather_get(place_name)
     if stored_weather ~= nil and datetime.now() < stored_weather.expiration then
         log.debug("Cache HIT for weather of '%s' (will expire at %s)", place_name, stored_weather.expiration)
         return {
             cached = true,
             -- coordinates are guaranteed to be cached when the weather is cached
-            coordinates = rust.storage.coordinates_get(place_name),
+            coordinates = storage.coordinates_get(place_name),
             weather = stored_weather
         }
     end
@@ -99,7 +99,8 @@ local function get_weather_for_place(bucket_id, place_name)
 end
 
 storage_api = {
-    get_weather_for_place = get_weather_for_place,
+    -- get_weather_for_place = get_weather_for_place,
+    get_weather_for_place = rust.storage.get_weather_for_place,
 }
 
 return {
