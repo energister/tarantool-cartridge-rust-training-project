@@ -115,7 +115,7 @@ fn call_storage(bucket_id: &u32, place_name: &String) -> Result<Option<storage::
 fn convert_to_http_response(place_name: &String, storage_response: &Option<storage::dto::StorageResponse>) -> Result<Response, FailureHttpResponse> {
     let response = storage_response.as_ref().ok_or_else(||
         // got Lua nil from storage
-        FailureHttpResponse::new(503, "Open Meteo API is temporarily unavailable")
+        FailureHttpResponse::new(503, "The weather service is temporarily unavailable. Please try again later.")
     )?;
 
     let coordinates = response.coordinates.as_ref().ok_or_else(|| {
