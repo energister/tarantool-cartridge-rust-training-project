@@ -51,7 +51,7 @@ pub fn get_weather_for_place(bucket_id: u32, place_name: String) -> Result<Optio
     let coordinates: Option<PlaceCoordinates> = get_coordinates(bucket_id, &place_name)?;
     Ok(match coordinates {
         None => {
-            // failed because of known error (e.g., network issue)
+            // failed because of a known error (e.g., network issue)
             None
         },
         Some(PlaceCoordinates::CouldNotBeFound(_)) => {

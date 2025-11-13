@@ -5,7 +5,7 @@ use crate::data_fetcher;
 
 #[derive(Debug, Serialize, Deserialize, LuaRead, PushInto)]
 pub struct StorageResponse {
-    // `None` means that the place could not be found
+    // `None` means the place could not be found
     pub coordinates: Option<Coordinates>,
     pub weather: Option<data_fetcher::dto::Weather>,
     pub cached: bool,
