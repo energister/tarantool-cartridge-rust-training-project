@@ -33,16 +33,18 @@ pub fn get_weather_for_place(bucket_id: u32, place_name: String) -> Result<Optio
             let stored_coordinates = place_storage::coordinates_get(&place_name)?
                 .ok_or("Coordinates should be known if weather is cached")?;
 
-            let coordinates = match stored_coordinates {
-                PlaceCoordinates::Value(coords) => Some(coords),
-                PlaceCoordinates::CouldNotBeFound(_) => None,
+            return match stored_coordinates {
+                PlaceCoordinates::CouldNotBeFound(_) => {
+                    Err("Coordinates should be known if weather is cached".into())
+                },
+                PlaceCoordinates::Value(coord) => {
+                    Ok(Some(dto::StorageResponse {
+                        coordinates: Some(coord),
+                        weather: Some(weather),
+                        cached: true,
+                    }))
+                }
             };
-
-            return Ok(Some(dto::StorageResponse {
-                coordinates,
-                weather: Some(weather),
-                cached: true,
-            }));
         }
     }
 
