@@ -78,11 +78,12 @@ fn calculate_bucket_id(place_name: &String) -> Result<u32, FailureHttpResponse> 
 fn call_storage(bucket_id: &u32, place_name: &String) -> Result<Option<storage::dto::StorageResponse>, FailureHttpResponse> {
     let lua = lua_state();
 
-    // TODO: make permanent (see shors call_shard as example)
+    // TODO: make permanent (static?) (see shors call_shard as example)
     let rpc_function: LuaFunction<_> = lua
         .eval(r#"
             return function(bucket_id, function_name, arguments_as_table)
                 require('checks').checks('number', 'string', 'table')
+                -- TODO: move to settings OR calculate from data fetcher timeout setting + some margin
                 local storage_response, err = require('vshard').router.callrw(bucket_id, function_name, arguments_as_table, {timeout = 5})
                 -- require('log').error("⚠️: %s", type(err))
 
