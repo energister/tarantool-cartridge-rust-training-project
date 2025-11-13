@@ -118,7 +118,7 @@ fn convert_to_http_response(place_name: &String, storage_response: &Option<stora
     )?;
 
     let coordinates = response.coordinates.as_ref().ok_or_else(|| {
-        FailureHttpResponse::new(404, &format!(r#"'{}' not found"#, &place_name))
+        FailureHttpResponse::new(404, &format!("'{}' not found", &place_name))
     })?;
 
     let weather = response.weather.as_ref().ok_or_else(|| {
