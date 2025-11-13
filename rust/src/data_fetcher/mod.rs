@@ -25,7 +25,7 @@ fn handle_errors(context: &str, url: &String, response: Result<Response, Box<fib
                 log::debug!("Timeout while fetching 'coordinates'");
                 Ok(None)
             } else {
-                log::error!("Failed to fetch '{}': URL={}", context, url);
+                log::error!("Failed to fetch '{}': {} URL={}", context, e, url);
                 Err(e)
             }
         }
