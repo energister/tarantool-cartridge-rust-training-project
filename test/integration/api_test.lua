@@ -41,14 +41,16 @@ local function get_temperature(latitude, longitude)
         tostring(latitude),
         tostring(longitude)
     )
-    local data = http_client.get(url):decode()
+    local response = http_client.get(url)
+    t.assert_equals(response.status, 200)
+    local data = response:decode()
     return tostring(datetime.parse(data['current']['time'])),
         data['current']['temperature']
 end
 
 g.test_weather_London = function(cg)
     local server = cg.cluster.main_server
-    
+
     local time1, temperature1 = get_temperature(51.50853, -0.12574)
 
     --[[ Act ]]
@@ -158,7 +160,7 @@ g.test_coordinates_fatching_failure = function(cg)
 
     local response = server:http_request('get', '/weather?place=Tokyo', { raise = false })
     t.assert_equals(response.status, 503)
-    t.assert_equals(response.body, 'Open Meteo API is temporarily unavailable')
+    t.assert_equals(response.body, 'The weather service is temporarily unavailable. Please try again later.')
 
     -- restore configuration to defaults
     set_request_timeout(server, nil)

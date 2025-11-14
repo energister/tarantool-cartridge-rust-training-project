@@ -1,3 +1,4 @@
+local cartridge = require('cartridge')
 local vshard = require('vshard')
 local log = require('log')
 local json = require('json')
@@ -33,6 +34,15 @@ local function http_get_weather(req)
     end
 end
 
+local function init()
+    local httpd = assert(cartridge.service_get('httpd'), "Failed to get httpd service")
+
+    httpd:route({ method = 'GET', path = '/weather'}, http_get_weather)
+
+    return true
+end
+
+
 return {
-    http_get_weather = http_get_weather,
+    init = init
 }

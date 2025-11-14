@@ -1,3 +1,4 @@
+local rust = require('librust')
 local storage = require('app.storage')
 local checks = require('checks')
 local cartridge = require('cartridge')
@@ -5,7 +6,9 @@ local log = require('log')
 local datetime = require('datetime')
 
 local function init(opts)
-    storage.create_spaces(opts.is_master)
+    assert(rust.storage.create_spaces(opts.is_master))
+
+    -- storage.create_spaces(opts.is_master)
 
     return true
 end
@@ -19,17 +22,19 @@ local function get_coordinates(bucket_id, place_name)
         return stored
     end
 
-    local coordinates, err = cartridge.rpc_call('app.roles.data_fetcher', 'get_coordinates', { place_name })
+    local response, err = cartridge.rpc_call('app.roles.data_fetcher', 'get_coordinates', { place_name })
     if err ~= nil then
         log.error("Failed to perform an RPC call to the data_fetcher.get_coordinates: %s", err)
         error("Failed to perform an RPC call to the data_fetcher.get_coordinates")
-    elseif coordinates == nil then
+    elseif response == nil then
         -- just failed to fetch coordinates because of a known error (e.g., network issue)
         return nil
     end
 
+    local coordinates = response.coordinates or {}
+
     -- cache the response
-    storage.coordinates_put(bucket_id, place_name, coordinates)
+    assert(storage.coordinates_put(bucket_id, place_name, coordinates))
     return coordinates
 end
 
@@ -48,7 +53,7 @@ local function fetch_weather(bucket_id, place_name, coordinates)
     end
 
     -- cache the response
-    storage.weather_upsert(bucket_id, place_name, weather.point_in_time, weather.expiration, weather)
+    assert(storage.weather_upsert(bucket_id, place_name, weather.point_in_time, weather.expiration, weather))
 
     return weather
 end
@@ -64,7 +69,7 @@ local function get_weather_for_place(bucket_id, place_name)
             cached = true,
             -- coordinates are guaranteed to be cached when the weather is cached
             coordinates = storage.coordinates_get(place_name),
-            weather = stored_weather.weather_data
+            weather = stored_weather
         }
     end
 
@@ -75,7 +80,7 @@ local function get_weather_for_place(bucket_id, place_name)
         -- failed because of known error (e.g., network issue)
         return nil
     elseif next(coordinates) == nil then
-        -- place not found
+        -- place is not listed in the geo database
         return {
             cached = true,
             coordinates = nil,
@@ -92,7 +97,8 @@ local function get_weather_for_place(bucket_id, place_name)
 end
 
 storage_api = {
-    get_weather_for_place = get_weather_for_place,
+    -- get_weather_for_place = get_weather_for_place,
+    get_weather_for_place = rust.storage.get_weather_for_place,
 }
 
 return {
