@@ -14,11 +14,7 @@ struct PlaceTuple {
 }
 impl tarantool::tuple::Encode for PlaceTuple {}
 
-pub fn init() -> Result<(), Box<dyn std::error::Error>> {
-    create_place_space()
-}
-
-fn create_place_space() -> Result<(), Box<dyn std::error::Error>> {
+pub fn create_space() -> Result<(), Box<dyn std::error::Error>> {
     let places = Space::builder(SPACE_NAME)
         .field(("place_name", FieldType::String))
         .field(("bucket_id", FieldType::Unsigned))

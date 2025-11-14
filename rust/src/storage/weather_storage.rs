@@ -16,11 +16,7 @@ struct WeatherTuple {
 }
 impl tarantool::tuple::Encode for WeatherTuple {}
 
-pub fn init() -> Result<(), Box<dyn std::error::Error>> {
-    create_weather_space()
-}
-
-fn create_weather_space() -> Result<(), Box<dyn std::error::Error>> {
+pub fn create_space() -> Result<(), Box<dyn std::error::Error>> {
     let weather = Space::builder(SPACE_NAME)
         .format([
             ("place_name", FieldType::String),

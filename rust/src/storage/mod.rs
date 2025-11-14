@@ -13,10 +13,12 @@ pub enum PlaceCoordinates {
     Value(dto::Coordinates),
 }
 
-pub fn init() -> Result<(), Box<dyn std::error::Error>> {
-    place_storage::init()?;
-    weather_storage::init()?;
-    Ok(())
+pub fn create_spaces(is_master: bool) -> Result<bool, Box<dyn std::error::Error>> {
+    if is_master {
+        place_storage::create_space()?;
+        weather_storage::create_space()?;
+    }
+    Ok(true)
 }
 
 pub fn get_weather_for_place(bucket_id: u32, place_name: String) -> Result<Option<dto::StorageResponse>, Box<dyn std::error::Error>> {

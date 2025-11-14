@@ -29,7 +29,7 @@ pub unsafe extern "C" fn luaopen_librust(l: *mut ffi_lua::lua_State) -> i32 {
                 "set_request_timeout_in_seconds" => tlua::Function::new(data_fetcher::settings::set_request_timeout),
             },
             "storage" => as_table! {
-                "init" => tlua::Function::new(storage::init),
+                "create_spaces" => tlua::Function::new(storage::create_spaces),
                 "get_weather_for_place" => tlua::Function::new(storage::get_weather_for_place),
             }
         };

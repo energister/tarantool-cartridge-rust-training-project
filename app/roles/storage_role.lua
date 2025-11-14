@@ -6,9 +6,7 @@ local log = require('log')
 local datetime = require('datetime')
 
 local function init(opts)
-    if (opts.is_master) then
-        rust.storage.init()
-    end
+    assert(rust.storage.create_spaces(opts.is_master))
 
     -- storage.create_spaces(opts.is_master)
 
