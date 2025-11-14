@@ -160,7 +160,7 @@ g.test_coordinates_fatching_failure = function(cg)
 
     local response = server:http_request('get', '/weather?place=Tokyo', { raise = false })
     t.assert_equals(response.status, 503)
-    t.assert_equals(response.body, 'Open Meteo API is temporarily unavailable')
+    t.assert_equals(response.body, 'The weather service is temporarily unavailable. Please try again later.')
 
     -- restore configuration to defaults
     set_request_timeout(server, nil)
