@@ -42,7 +42,7 @@ fn convert(data: MeteoApiWeatherResponse) -> Result<dto::Weather, Box<dyn std::e
 
     let point_in_time =
         // TODO: add &timeformat=unixtime to the URL to simplify parsing. See https://open-meteo.com/en/docs#api_documentation
-        time::PrimitiveDateTime::parse(&data.current.time, &time::format_description::well_known::Iso8601::DATE_TIME)
+        time::PrimitiveDateTime::parse(&data.current.time, &time::format_description::well_known::Iso8601::DEFAULT)
             .map_err(|e: time::error::Parse| {
                 log::error!("Unexpected time format in Meteo API response ({}): {}", data.current.time, e);
                 std::io::Error::new(
