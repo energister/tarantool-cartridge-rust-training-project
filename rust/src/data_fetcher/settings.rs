@@ -35,13 +35,6 @@ pub static SETTINGS: Settings = Settings {
 };
 
 /// If `None`, the default timeout will be set.
-pub fn set_request_timeout(seconds: Option<u64>) {
-    SETTINGS.open_meteo_api.set_request_timeout(
-        seconds.map(|d| Duration::from_secs(d))
-    );
-}
-
-/// If `None`, the default timeout will be set.
 #[tarantool::proc]
 // TODO: replace parameter with struct
 pub fn set_request_timeout_in_seconds(seconds: Option<u64>) {

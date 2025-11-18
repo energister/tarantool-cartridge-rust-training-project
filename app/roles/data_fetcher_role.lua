@@ -1,8 +1,7 @@
 -- Role: data_fetcher
 -- Purpose: Encapsulate interactions with the remote server API (https://open-meteo.com/)
-local rust = require('librust')
 local log = require('log')
-local fetcher = require('app.data_fetcher')
+local data_fetcher = require('app.data_fetcher')
 
 local CFG_FILE_NAME = 'custom_config' -- custom_config.yml
 local CFG_SECTION_NAME = 'open_meteo_api'
@@ -33,8 +32,7 @@ local function apply_config(conf, opts) -- luacheck: no unused args
     local timeout = ((conf[CFG_FILE_NAME] or {})[CFG_SECTION_NAME] or {})[CFG_REQUEST_TIMEOUT_OPTION_NAME]
 
     box.func['librust.set_request_timeout_in_seconds']:call({timeout or box.NULL})
-    rust.data_fetcher.set_request_timeout_in_seconds(timeout)
-    fetcher.settings.open_meteo_api:set_request_timeout_in_seconds(timeout)
+    data_fetcher.settings.open_meteo_api:set_request_timeout_in_seconds(timeout)
 
     return true
 end
@@ -44,8 +42,8 @@ return {
     init = init,
     validate_config = validate_config,
     apply_config = apply_config,
-    --get_coordinates = rust.data_fetcher.get_coordinates,
-    get_weather = rust.data_fetcher.get_weather,
+    --get_coordinates = data_fetcher.get_coordinates,
+    --get_weather = data_fetcher.get_weather,
     rpc_handler = function(path, ctx, mp_request)
         return box.func['librust.rpc_handler']:call({ path, ctx, mp_request })
     end

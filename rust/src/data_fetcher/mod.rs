@@ -6,9 +6,9 @@
 use fibreq::Response;
 
 pub mod dto;
-pub mod settings;
-pub mod coordinates;
-pub mod weather;
+mod settings;
+mod coordinates;
+mod weather;
 mod shors_server;
 
 /// Returns `None` in case of known transient errors

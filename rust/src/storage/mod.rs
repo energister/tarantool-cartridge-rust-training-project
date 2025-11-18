@@ -135,34 +135,18 @@ fn make_remote_call_to_data_fetcher_for_coordinates(place_name: &String) -> Resu
 }
 
 fn make_remote_call_to_data_fetcher_for_weather(coordinates: &dto::Coordinates) -> Result<Option<data_fetcher::dto::Weather>, Box<dyn std::error::Error>> {
-
     let lua = tarantool::lua_state();
 
-    // TODO: use shors
-    let rpc_function: LuaFunction<_> = lua
-        .eval(r#"
-            return function(coordinates_latitude, coordinates_longitude)
-                require('checks').checks('number', 'number')
-
-                local arguments = { coordinates_latitude, coordinates_longitude }
-                local response, err = require('cartridge').rpc_call('app.roles.data_fetcher', 'get_weather', arguments)
-                if err ~= nil then
-                    log.error("Failed to perform an RPC call to the data_fetcher.get_weather: %s", err)
-                    error("Failed to perform an RPC call to the data_fetcher.get_weather")
-                end
-
-                return response
-            end"#,
-        )
-        .map_err(|e| {
-            log::error!("Failed to generate call function: {}", e);
-            "Unexpected error while fetching weather"
-        })?;
-
-    let response = rpc_function
-        .call_with_args((coordinates.latitude, coordinates.longitude))
+    let response: Option<data_fetcher::dto::Weather> = transport::rpc::client::Builder::new(&lua)
+        .role_endpoint("app.roles.data_fetcher", "/get_weather")
+        .call(&mut transport::Context::background(), (coordinates.latitude, coordinates.longitude))
         .map_err(|e| {
             log::error!("Failed to request data fetcher: {}", e);
+            "Unexpected error while fetching weather"
+        })?
+        .get(0)
+        .ok_or_else(|| {
+            log::error!("Failed to extract response from tuple at index 0");
             "Unexpected error while fetching weather"
         })?;
 
