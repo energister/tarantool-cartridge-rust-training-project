@@ -51,6 +51,30 @@ apply_config.test_remove_the_option_or_config = function()
     t.assert_equals(get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
 end
 
+apply_config.test_no_section = function()
+    local custom_config = yaml.decode([[
+    custom_config:
+        # no open_meteo_api section
+        some_other_section:
+            some_other_option: 321
+    ]])
+
+    data_fetcher_role.apply_config(custom_config, OPTS_ARGUMENT)
+
+    t.assert_equals(get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
+end
+
+apply_config.test_no_custom_config = function()
+    local config = yaml.decode([[
+    topology:
+        failover: false
+    ]])
+
+    data_fetcher_role.apply_config(config, OPTS_ARGUMENT)
+
+    t.assert_equals(get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
+end
+
 
 validate_config.test_some_value = function()
     local custom_config = yaml.decode([[
@@ -73,6 +97,30 @@ validate_config.test_no_option = function()
     ]])
 
     local result = data_fetcher_role.validate_config(custom_config, {})
+
+    t.assert_eval_to_true(result)
+end
+
+validate_config.test_no_section = function()
+    local custom_config = yaml.decode([[
+    custom_config:
+        # no open_meteo_api section
+        some_other_section:
+            some_other_option: 321
+    ]])
+
+    local result = data_fetcher_role.validate_config(custom_config, {})
+
+    t.assert_eval_to_true(result)
+end
+
+validate_config.test_no_custom_config = function()
+    local config = yaml.decode([[
+    topology:
+        failover: false
+    ]])
+
+    local result = data_fetcher_role.validate_config(config, {})
 
     t.assert_eval_to_true(result)
 end
