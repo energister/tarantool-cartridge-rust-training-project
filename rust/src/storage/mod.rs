@@ -6,7 +6,7 @@ use crate::data_fetcher;
 use shors::transport;
 use tarantool;
 use time::OffsetDateTime;
-use tlua::{LuaFunction, LuaRead, PushInto};
+use tlua::{LuaRead, PushInto};
 
 #[derive(Debug, Clone, LuaRead, PushInto)]
 pub enum PlaceCoordinates {
