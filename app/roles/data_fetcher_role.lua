@@ -11,6 +11,7 @@ local function init(opts)
     box.schema.func.create('librust.init_rpc_server', { language = 'C', if_not_exists = true })
     box.schema.func.create('librust.rpc_handler', { language = 'C', if_not_exists = true })
     box.schema.func.create('librust.set_request_timeout_in_seconds', { language = 'C', if_not_exists = true })
+    box.schema.func.create('librust.get_request_timeout_in_seconds', { language = 'C', if_not_exists = true })
 
     box.func['librust.init_rpc_server']:call()
 end

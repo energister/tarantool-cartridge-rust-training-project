@@ -7,7 +7,10 @@ local data_fetcher_role = require('app.roles.data_fetcher_role')
 
 local OPTS_ARGUMENT = { is_master = true }
 
-local settings = require('app.data_fetcher').settings.open_meteo_api
+local REQUEST_TIMEOUT_IN_SECONDS_DEFAULT = 5
+local get_request_timeout_in_seconds = function()
+    return box.func['librust.get_request_timeout_in_seconds']:call()
+end
 
 g.before_all(function()
     data_fetcher_role.init(OPTS_ARGUMENT)
@@ -18,7 +21,7 @@ g.test_default_on_start = function()
 
     data_fetcher_role.apply_config(custom_config, OPTS_ARGUMENT)
 
-    t.assert_equals(settings.request_timeout_in_seconds, settings.REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
+    t.assert_equals(get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
 end
 
 g.test_apply_config = function()
@@ -30,7 +33,7 @@ g.test_apply_config = function()
 
     data_fetcher_role.apply_config(custom_config, OPTS_ARGUMENT)
 
-    t.assert_equals(settings.request_timeout_in_seconds, 15)
+    t.assert_equals(get_request_timeout_in_seconds(), 15)
 end
 
 g.test_remove_the_option_or_config = function()
@@ -44,5 +47,5 @@ g.test_remove_the_option_or_config = function()
     data_fetcher_role.apply_config(custom_config, OPTS_ARGUMENT)
 
     -- become default again
-    t.assert_equals(settings.request_timeout_in_seconds, settings.REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
+    t.assert_equals(get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
 end

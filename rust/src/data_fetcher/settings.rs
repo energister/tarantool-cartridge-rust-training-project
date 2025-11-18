@@ -42,3 +42,8 @@ pub fn set_request_timeout_in_seconds(seconds: Option<u64>) {
         seconds.map(|d| Duration::from_secs(d))
     );
 }
+
+#[tarantool::proc]
+pub fn get_request_timeout_in_seconds() -> Result<u64, String> {
+    Ok(SETTINGS.open_meteo_api.get_request_timeout().as_secs())
+}
