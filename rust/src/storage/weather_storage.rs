@@ -43,9 +43,9 @@ pub fn create_space() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn weather_upsert(bucket_id: u32, place_name: &String, point_in_time: Datetime, expiration: Datetime, weather: data_fetcher::dto::Weather) -> Result<Tuple, Box<dyn std::error::Error>> {
+pub fn weather_upsert(bucket_id: u32, place_name: &str, point_in_time: Datetime, expiration: Datetime, weather: data_fetcher::dto::Weather) -> Result<Tuple, Box<dyn std::error::Error>> {
     let tuple = WeatherTuple {
-        place_name: place_name.clone(),
+        place_name: place_name.to_owned(),
         bucket_id,
         point_in_time,
         expiration,

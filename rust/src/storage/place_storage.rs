@@ -38,9 +38,9 @@ pub fn create_space() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn coordinates_put(bucket_id: u32, place_name: &String, coordinates: PlaceCoordinates) -> Result<Tuple, Box<dyn std::error::Error>> {
+pub fn coordinates_put(bucket_id: u32, place_name: &str, coordinates: PlaceCoordinates) -> Result<Tuple, Box<dyn std::error::Error>> {
     let tuple = PlaceTuple {
-        place_name: place_name.clone(),
+        place_name: place_name.to_owned(),
         bucket_id,
         coordinates: match coordinates {
             PlaceCoordinates::Value(coords) => Some(coords),
@@ -57,7 +57,7 @@ pub fn coordinates_put(bucket_id: u32, place_name: &String, coordinates: PlaceCo
         })
 }
 
-pub fn coordinates_get(place_name: &String) -> Result<Option<PlaceCoordinates>, Box<dyn std::error::Error>> {
+pub fn coordinates_get(place_name: &str) -> Result<Option<PlaceCoordinates>, Box<dyn std::error::Error>> {
     let maybe_stored = Space::find(SPACE_NAME)
         .ok_or(format!("Can't find space '{SPACE_NAME}'"))?
         .get(&(place_name,))?

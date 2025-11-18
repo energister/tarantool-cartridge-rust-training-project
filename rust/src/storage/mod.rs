@@ -78,7 +78,7 @@ pub fn get_weather_for_place(bucket_id: u32, place_name: String) -> Result<Optio
     })
 }
 
-fn get_coordinates(bucket_id: u32, place_name: &String) -> Result<Option<PlaceCoordinates>, Box<dyn std::error::Error>> {
+fn get_coordinates(bucket_id: u32, place_name: &str) -> Result<Option<PlaceCoordinates>, Box<dyn std::error::Error>> {
     let stored_coordinates = place_storage::coordinates_get(place_name)?;
     if stored_coordinates.is_some() {
         return Ok(stored_coordinates);
@@ -107,7 +107,7 @@ fn fetch_weather(bucket_id: u32, place_name: String, coordinates: &dto::Coordina
     Ok(weather)
 }
 
-fn make_remote_call_to_data_fetcher_for_coordinates(place_name: &String) -> Result<Option<PlaceCoordinates>, Box<dyn std::error::Error>> {
+fn make_remote_call_to_data_fetcher_for_coordinates(place_name: &str) -> Result<Option<PlaceCoordinates>, Box<dyn std::error::Error>> {
     let lua = tarantool::lua_state();
 
     let response: Option<data_fetcher::dto::CoordinatesResponse> = transport::rpc::client::Builder::new(&lua)

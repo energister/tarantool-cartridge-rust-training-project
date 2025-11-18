@@ -63,7 +63,7 @@ fn extract_place_parameter(request: &Request) -> Result<String, FailureHttpRespo
     place.ok_or(FailureHttpResponse::new(400, "'place' parameter is required"))
 }
 
-fn calculate_bucket_id(place_name: &String) -> Result<u32, FailureHttpResponse> {
+fn calculate_bucket_id(place_name: &str) -> Result<u32, FailureHttpResponse> {
     lua_state().eval_with(
         "return require('vshard').router.bucket_id_strcrc32('...')",
         place_name,
@@ -75,7 +75,7 @@ fn calculate_bucket_id(place_name: &String) -> Result<u32, FailureHttpResponse> 
     )
 }
 
-fn call_storage(bucket_id: &u32, place_name: &String) -> Result<Option<storage::dto::StorageResponse>, FailureHttpResponse> {
+fn call_storage(bucket_id: &u32, place_name: &str) -> Result<Option<storage::dto::StorageResponse>, FailureHttpResponse> {
     let lua = lua_state();
 
     // TODO: make permanent (static?) (see shors call_shard as example)
@@ -112,7 +112,7 @@ fn call_storage(bucket_id: &u32, place_name: &String) -> Result<Option<storage::
         });
 }
 
-fn convert_to_http_response(place_name: &String, storage_response: &Option<storage::dto::StorageResponse>) -> Result<Response, FailureHttpResponse> {
+fn convert_to_http_response(place_name: &str, storage_response: &Option<storage::dto::StorageResponse>) -> Result<Response, FailureHttpResponse> {
     let response = storage_response.as_ref().ok_or_else(||
         // got Lua nil from storage
         FailureHttpResponse::new(503, "The weather service is temporarily unavailable. Please try again later.")

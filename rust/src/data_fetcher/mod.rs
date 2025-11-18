@@ -12,7 +12,7 @@ mod weather;
 mod shors_server;
 
 /// Returns `None` in case of known transient errors
-fn handle_errors(context: &str, url: &String, response: Result<Response, Box<fibreq::Error>>) -> Result<Option<Response>, Box<dyn std::error::Error>> {
+fn handle_errors(context: &str, url: &str, response: Result<Response, Box<fibreq::Error>>) -> Result<Option<Response>, Box<dyn std::error::Error>> {
     match response {
         Ok(resp) => {
             if resp.status() == 200 {
