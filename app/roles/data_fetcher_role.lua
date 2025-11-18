@@ -1,7 +1,6 @@
 -- Role: data_fetcher
 -- Purpose: Encapsulate interactions with the remote server API (https://open-meteo.com/)
 local log = require('log')
-local data_fetcher = require('app.data_fetcher')
 
 local CFG_FILE_NAME = 'custom_config' -- custom_config.yml
 local CFG_SECTION_NAME = 'open_meteo_api'
@@ -33,7 +32,6 @@ local function apply_config(conf, opts) -- luacheck: no unused args
     local timeout = ((conf[CFG_FILE_NAME] or {})[CFG_SECTION_NAME] or {})[CFG_REQUEST_TIMEOUT_OPTION_NAME]
 
     box.func['librust.set_request_timeout_in_seconds']:call({timeout or box.NULL})
-    data_fetcher.settings.open_meteo_api:set_request_timeout_in_seconds(timeout)
 
     return true
 end
