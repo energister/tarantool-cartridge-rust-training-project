@@ -42,8 +42,6 @@ return {
     init = init,
     validate_config = validate_config,
     apply_config = apply_config,
-    --get_coordinates = data_fetcher.get_coordinates,
-    --get_weather = data_fetcher.get_weather,
     rpc_handler = function(path, ctx, mp_request)
         return box.func['librust.rpc_handler']:call({ path, ctx, mp_request })
     end
