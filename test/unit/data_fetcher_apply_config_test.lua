@@ -9,6 +9,10 @@ local OPTS_ARGUMENT = { is_master = true }
 
 local settings = require('app.data_fetcher').settings.open_meteo_api
 
+g.before_all(function()
+    data_fetcher_role.init(OPTS_ARGUMENT)
+end)
+
 g.test_default_on_start = function()
     local custom_config = { }
 

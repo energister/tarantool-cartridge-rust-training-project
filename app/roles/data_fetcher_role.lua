@@ -8,6 +8,14 @@ local CFG_FILE_NAME = 'custom_config' -- custom_config.yml
 local CFG_SECTION_NAME = 'open_meteo_api'
 local CFG_REQUEST_TIMEOUT_OPTION_NAME = 'request_timeout_in_seconds'
 
+local function init(opts)
+    box.schema.func.create('librust.init_rpc_server', { language = 'C', if_not_exists = true })
+    box.schema.func.create('librust.rpc_handler', { language = 'C', if_not_exists = true })
+    box.schema.func.create('librust.set_request_timeout_in_seconds', { language = 'C', if_not_exists = true })
+
+    box.func['librust.init_rpc_server']:call()
+end
+
 local function validate_config(conf_new, conf_old) -- luacheck: no unused args
     local timeout = ((conf_new[CFG_FILE_NAME] or {})[CFG_SECTION_NAME] or {})[CFG_REQUEST_TIMEOUT_OPTION_NAME]
     if timeout ~= nil
@@ -24,6 +32,7 @@ end
 local function apply_config(conf, opts) -- luacheck: no unused args
     local timeout = ((conf[CFG_FILE_NAME] or {})[CFG_SECTION_NAME] or {})[CFG_REQUEST_TIMEOUT_OPTION_NAME]
 
+    box.func['librust.set_request_timeout_in_seconds']:call({timeout or box.NULL})
     rust.data_fetcher.set_request_timeout_in_seconds(timeout)
     fetcher.settings.open_meteo_api:set_request_timeout_in_seconds(timeout)
 
@@ -32,8 +41,12 @@ end
 
 return {
     role_name = 'app.roles.data_fetcher',
+    init = init,
     validate_config = validate_config,
     apply_config = apply_config,
-    get_coordinates = rust.data_fetcher.get_coordinates,
+    --get_coordinates = rust.data_fetcher.get_coordinates,
     get_weather = rust.data_fetcher.get_weather,
+    rpc_handler = function(path, ctx, mp_request)
+        return box.func['librust.rpc_handler']:call({ path, ctx, mp_request })
+    end
 }
