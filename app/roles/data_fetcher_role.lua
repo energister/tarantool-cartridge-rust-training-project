@@ -1,5 +1,6 @@
 -- Role: data_fetcher
 -- Purpose: Encapsulate interactions with the remote server API (https://open-meteo.com/)
+local rust = require('librust')
 local log = require('log')
 
 local CFG_FILE_NAME = 'custom_config' -- custom_config.yml
@@ -17,9 +18,13 @@ end
 
 local function validate_config(conf_new, conf_old) -- luacheck: no unused args
     local timeout = ((conf_new[CFG_FILE_NAME] or {})[CFG_SECTION_NAME] or {})[CFG_REQUEST_TIMEOUT_OPTION_NAME]
-    if timeout ~= nil
-        and (type(timeout) ~= 'number' or timeout < 0) then
 
+    --[[ validate_config() is called too early during lifecycle,
+    so it's impossible to call Rust via `box.func['<fn>']:call()`
+    because it leads to the "Please call box.cfg{} first" error ]]
+    local valid = rust.data_fetcher.validate_request_timeout_in_seconds(timeout)
+
+    if not valid then
         local option_path = CFG_FILE_NAME .. '.' .. CFG_SECTION_NAME .. '.' .. CFG_REQUEST_TIMEOUT_OPTION_NAME
         log.info("Invalid %s value: %s", option_path, tostring(timeout))
         return nil, option_path .. " must be a non-negative number"

@@ -1,5 +1,6 @@
 use std::sync::RwLock;
 use std::time::Duration;
+use tlua::AnyLuaValue;
 
 const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -33,6 +34,14 @@ pub static SETTINGS: Settings = Settings {
         request_timeout: RwLock::new(DEFAULT_REQUEST_TIMEOUT),
     },
 };
+
+pub fn validate_request_timeout_in_seconds(seconds: Option<AnyLuaValue>) -> Result<bool, String> {
+    match seconds {
+        Some(AnyLuaValue::LuaNumber(value)) if value >= 0.0 && value.fract() == 0.0 => Ok(true),
+        None => Ok(true),  // default value will be used
+        _ => Ok(false)
+    }
+}
 
 /// If `None`, the default timeout will be set.
 #[tarantool::proc]
