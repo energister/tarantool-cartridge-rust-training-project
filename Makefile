@@ -1,4 +1,4 @@
-.PHONY: build, setup, dev, test
+.PHONY: build, setup, dev, test, start, setup-cluster, load-test
 
 build:  ## Build the project
 	cartridge build
@@ -18,3 +18,12 @@ test: build  ## Runs the test suite. Optionally, provide a test name as the seco
 # This prevents make from trying to execute <test_name> as a second target and make a file named after the test_name
 %:
 	@:
+
+start: build
+	LUA_CPATH="../../target/debug/?.so;target/debug/?.so" cartridge start -d
+
+setup-cluster:
+	cartridge replicasets setup --bootstrap-vshard
+
+load-test:
+	k6 run test/k6-test.js
