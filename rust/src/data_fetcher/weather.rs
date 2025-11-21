@@ -22,7 +22,7 @@ pub fn get_weather(latitude: f64, longitude: f64) -> Result<Option<dto::Weather>
     let client = fibreq::ClientBuilder::new().build();
     let http_req = client.get(&url)?;
     let response_result = http_req
-        .request_timeout(SETTINGS.open_meteo_api.get_request_timeout())
+        .request_timeout(SETTINGS.with(|s| s.open_meteo_api.request_timeout.get()))
         .send();
 
     let response = data_fetcher::handle_errors("weather", &url, response_result)?;
