@@ -2,19 +2,19 @@ local t = require('luatest')
 local apply_config = t.group('data_fetcher_role.apply_config')
 local validate_config = t.group('data_fetcher_role.validate_config')
 
-local yaml = require('yaml')
-
 local data_fetcher_role = require('app.roles.data_fetcher_role')
+
+local rust = require('app.rust')
+local yaml = require('yaml')
 
 local OPTS_ARGUMENT = { is_master = true }
 
 local REQUEST_TIMEOUT_IN_SECONDS_DEFAULT = 5
-local get_request_timeout_in_seconds = function()
-    return box.func['librust.get_request_timeout_in_seconds']:call()
-end
 
 t.before_suite(function()
     data_fetcher_role.init(OPTS_ARGUMENT)
+
+    rust.load_function("librust", "get_request_timeout_in_seconds")
 end)
 
 apply_config.test_default_on_start = function()
@@ -22,7 +22,7 @@ apply_config.test_default_on_start = function()
 
     data_fetcher_role.apply_config(custom_config, OPTS_ARGUMENT)
 
-    t.assert_equals(get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
+    t.assert_equals(rust.get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
 end
 
 apply_config.test_apply_config = function()
@@ -34,7 +34,7 @@ apply_config.test_apply_config = function()
 
     data_fetcher_role.apply_config(custom_config, OPTS_ARGUMENT)
 
-    t.assert_equals(get_request_timeout_in_seconds(), 15)
+    t.assert_equals(rust.get_request_timeout_in_seconds(), 15)
 end
 
 apply_config.test_remove_the_option_or_config = function()
@@ -48,7 +48,7 @@ apply_config.test_remove_the_option_or_config = function()
     data_fetcher_role.apply_config(custom_config, OPTS_ARGUMENT)
 
     -- become default again
-    t.assert_equals(get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
+    t.assert_equals(rust.get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
 end
 
 apply_config.test_no_section = function()
@@ -61,7 +61,7 @@ apply_config.test_no_section = function()
 
     data_fetcher_role.apply_config(custom_config, OPTS_ARGUMENT)
 
-    t.assert_equals(get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
+    t.assert_equals(rust.get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
 end
 
 apply_config.test_no_custom_config = function()
@@ -72,7 +72,7 @@ apply_config.test_no_custom_config = function()
 
     data_fetcher_role.apply_config(config, OPTS_ARGUMENT)
 
-    t.assert_equals(get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
+    t.assert_equals(rust.get_request_timeout_in_seconds(), REQUEST_TIMEOUT_IN_SECONDS_DEFAULT)
 end
 
 
