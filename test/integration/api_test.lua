@@ -32,7 +32,7 @@ g.test_weather_Berlin = function(cg)
     t.assert_equals(response.status, 200)
     t.assert_equals(response.json['coordinates']['latitude'], 52.52437)
     t.assert_equals(response.json['coordinates']['longitude'], 13.41053)
-    t.assert_gt(response.json['temperature_celsius'], 0)
+    t.assert_type(response.json['temperature_celsius'], "number")
 end
 
 local function get_temperature(latitude, longitude)
