@@ -18,7 +18,7 @@ test: build  ## Runs the test suite. Optionally, provide a test name via `test` 
 	.rocks/bin/luatest -v -c $(test) ) || \
 	(echo "Tarantool log:" && cat tmp/tarantool.log && false)
 
-start: build
+start: build  ## Start the cartridge cluster in background
 	LUA_CPATH="../../target/debug/?.so;target/debug/?.so" cartridge start -d
 
 setup-cluster:
