@@ -5,7 +5,7 @@
 
 use fibreq::Response;
 
-pub mod dto;
+pub mod api;
 pub(crate) mod settings;
 mod coordinates;
 mod weather;

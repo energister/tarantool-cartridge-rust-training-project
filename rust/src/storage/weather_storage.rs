@@ -12,7 +12,7 @@ struct WeatherTuple {
     bucket_id: u32,
     point_in_time: Datetime,
     expiration: Datetime,
-    weather_data: data_fetcher::dto::Weather
+    weather_data: data_fetcher::api::Weather
 }
 impl tarantool::tuple::Encode for WeatherTuple {}
 
@@ -43,7 +43,7 @@ pub fn create_space() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn weather_upsert(bucket_id: u32, place_name: &str, point_in_time: Datetime, expiration: Datetime, weather: data_fetcher::dto::Weather) -> Result<Tuple, Box<dyn std::error::Error>> {
+pub fn weather_upsert(bucket_id: u32, place_name: &str, point_in_time: Datetime, expiration: Datetime, weather: data_fetcher::api::Weather) -> Result<Tuple, Box<dyn std::error::Error>> {
     let tuple = WeatherTuple {
         place_name: place_name.to_owned(),
         bucket_id,
@@ -61,7 +61,7 @@ pub fn weather_upsert(bucket_id: u32, place_name: &str, point_in_time: Datetime,
         })
 }
 
-pub fn weather_get(place_name: &str) -> Result<Option<data_fetcher::dto::Weather>, Box<dyn std::error::Error>> {
+pub fn weather_get(place_name: &str) -> Result<Option<data_fetcher::api::Weather>, Box<dyn std::error::Error>> {
     let maybe_stored = Space::find(SPACE_NAME)
         .ok_or(format!("Can't find space '{SPACE_NAME}'"))?
         .get(&(place_name,))?

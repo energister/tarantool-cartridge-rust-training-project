@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use crate::data_fetcher;
-use crate::data_fetcher::dto;
+use crate::data_fetcher::api;
 use crate::data_fetcher::settings::SETTINGS;
 
 #[derive(Deserialize, Debug)]
@@ -16,7 +16,7 @@ struct MeteoApiCurrentWeather {
     temperature: f64,
 }
 
-pub fn get_weather(latitude: f64, longitude: f64) -> Result<Option<dto::Weather>, Box<dyn std::error::Error>> {
+pub fn get_weather(latitude: f64, longitude: f64) -> Result<Option<api::Weather>, Box<dyn std::error::Error>> {
     let url = format!("https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&current=temperature", latitude, longitude);
 
     let client = fibreq::ClientBuilder::new().build();
@@ -37,7 +37,7 @@ pub fn get_weather(latitude: f64, longitude: f64) -> Result<Option<dto::Weather>
     weather_data.map(convert).transpose()
 }
 
-fn convert(data: MeteoApiWeatherResponse) -> Result<dto::Weather, Box<dyn std::error::Error>> {
+fn convert(data: MeteoApiWeatherResponse) -> Result<api::Weather, Box<dyn std::error::Error>> {
     let offset = time::UtcOffset::from_whole_seconds(data.utc_offset_seconds)?;
 
     let point_in_time =
@@ -56,7 +56,7 @@ fn convert(data: MeteoApiWeatherResponse) -> Result<dto::Weather, Box<dyn std::e
 
     let ttl = time::Duration::seconds(data.current.interval);
 
-    Ok(dto::Weather {
+    Ok(api::Weather {
         point_in_time: point_in_time.into(),
         expiration: (point_in_time + ttl).into(),
         temperature_celsius: data.current.temperature,

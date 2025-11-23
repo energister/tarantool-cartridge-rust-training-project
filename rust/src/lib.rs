@@ -1,5 +1,5 @@
 mod router;
-mod dto_api;
+mod http_api;
 mod data_fetcher;
 mod storage;
 

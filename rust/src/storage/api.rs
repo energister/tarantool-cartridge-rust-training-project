@@ -7,7 +7,7 @@ use crate::data_fetcher;
 pub struct StorageResponse {
     // `None` means the place could not be found
     pub coordinates: Option<Coordinates>,
-    pub weather: Option<data_fetcher::dto::Weather>,
+    pub weather: Option<data_fetcher::api::Weather>,
     pub cached: bool,
 }
 

@@ -8,7 +8,7 @@ use tarantool::datetime::Datetime;
 use tarantool::lua_state;
 use tarantool::tlua::{as_table, LuaFunction};
 use crate::storage;
-use crate::dto_api;
+use crate::http_api;
 use time::format_description::well_known::Rfc3339;
 
 #[tarantool::proc]
@@ -51,7 +51,7 @@ impl FailureHttpResponse {
 fn do_handle_request(request: &Request) -> Result<Response, FailureHttpResponse> {
     let place_name = extract_place_parameter(request)?;
     let bucket_id = calculate_bucket_id(&place_name)?;
-    let response: Option<storage::dto::StorageResponse> = call_storage(&bucket_id, &place_name)?;
+    let response: Option<storage::api::StorageResponse> = call_storage(&bucket_id, &place_name)?;
     log::debug!("Response from storage: {:#?}", &response);
     Ok(convert_to_http_response(&place_name, &response))?
 }
@@ -76,7 +76,7 @@ fn calculate_bucket_id(place_name: &str) -> Result<u32, FailureHttpResponse> {
     )
 }
 
-fn call_storage(bucket_id: &u32, place_name: &str) -> Result<Option<storage::dto::StorageResponse>, FailureHttpResponse> {
+fn call_storage(bucket_id: &u32, place_name: &str) -> Result<Option<storage::api::StorageResponse>, FailureHttpResponse> {
     let lua = lua_state();
 
     // TODO: make permanent (static?) (see shors call_shard as example)
@@ -113,7 +113,7 @@ fn call_storage(bucket_id: &u32, place_name: &str) -> Result<Option<storage::dto
         });
 }
 
-fn convert_to_http_response(place_name: &str, storage_response: &Option<storage::dto::StorageResponse>) -> Result<Response, FailureHttpResponse> {
+fn convert_to_http_response(place_name: &str, storage_response: &Option<storage::api::StorageResponse>) -> Result<Response, FailureHttpResponse> {
     let response = storage_response.as_ref().ok_or_else(||
         // got Lua nil from storage
         FailureHttpResponse::new(503, "The weather service is temporarily unavailable. Please try again later.")
@@ -124,8 +124,8 @@ fn convert_to_http_response(place_name: &str, storage_response: &Option<storage:
     })?;
 
     let weather = response.weather.as_ref().ok_or_else(|| {
-        let http_response = dto_api::HttpResponse {
-            coordinates: dto_api::HttpCoordinates {
+        let http_response = http_api::HttpResponse {
+            coordinates: http_api::HttpCoordinates {
                 latitude: coordinates.latitude,
                 longitude: coordinates.longitude,
             },
@@ -136,8 +136,8 @@ fn convert_to_http_response(place_name: &str, storage_response: &Option<storage:
         FailureHttpResponse::new(503, json)
     })?;
 
-    let http_response = dto_api::HttpResponse {
-        coordinates: dto_api::HttpCoordinates {
+    let http_response = http_api::HttpResponse {
+        coordinates: http_api::HttpCoordinates {
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
         },

@@ -1,4 +1,4 @@
-pub mod dto;
+pub mod api;
 mod place_storage;
 mod weather_storage;
 
@@ -11,7 +11,7 @@ use tlua::{LuaRead, PushInto};
 #[derive(Debug, Clone, LuaRead, PushInto)]
 pub enum PlaceCoordinates {
     CouldNotBeFound([(); 0]),
-    Value(dto::Coordinates),
+    Value(api::Coordinates),
 }
 
 #[tarantool::proc]
@@ -24,9 +24,9 @@ pub fn create_spaces(is_master: bool) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 #[tarantool::proc]
-pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<dto::StorageResponse>, Box<dyn std::error::Error>> {
+pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<api::StorageResponse>, Box<dyn std::error::Error>> {
 
-    let stored_weather: Option<data_fetcher::dto::Weather> = weather_storage::weather_get(place_name)?;
+    let stored_weather: Option<data_fetcher::api::Weather> = weather_storage::weather_get(place_name)?;
     // Keep a copy of expiration for logging purposes
     let expiration_for_log = stored_weather.as_ref().map(|w| w.expiration);
 
@@ -43,7 +43,7 @@ pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<
                     Err("Coordinates should be known if weather is cached".into())
                 },
                 PlaceCoordinates::Value(coord) => {
-                    Ok(Some(dto::StorageResponse {
+                    Ok(Some(api::StorageResponse {
                         coordinates: Some(coord),
                         weather: Some(weather),
                         cached: true,
@@ -63,7 +63,7 @@ pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<
         },
         Some(PlaceCoordinates::CouldNotBeFound(_)) => {
             // place is not listed in the geo database
-            Some(dto::StorageResponse {
+            Some(api::StorageResponse {
                 coordinates: None,
                 weather: None,
                 cached: true,
@@ -71,7 +71,7 @@ pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<
         }
         Some(PlaceCoordinates::Value(coords)) => {
             let weather = fetch_weather(bucket_id, place_name, &coords)?;
-            Some(dto::StorageResponse {
+            Some(api::StorageResponse {
                 coordinates: Some(coords),
                 weather,
                 cached: false,
@@ -98,7 +98,7 @@ fn get_coordinates(bucket_id: u32, place_name: &str) -> Result<Option<PlaceCoord
     })
 }
 
-fn fetch_weather(bucket_id: u32, place_name: &str, coordinates: &dto::Coordinates) -> Result<Option<data_fetcher::dto::Weather>, Box<dyn std::error::Error>> {
+fn fetch_weather(bucket_id: u32, place_name: &str, coordinates: &api::Coordinates) -> Result<Option<data_fetcher::api::Weather>, Box<dyn std::error::Error>> {
     let weather = make_remote_call_to_data_fetcher_for_weather(&coordinates)?;
 
     // cache the response
@@ -112,7 +112,7 @@ fn fetch_weather(bucket_id: u32, place_name: &str, coordinates: &dto::Coordinate
 fn make_remote_call_to_data_fetcher_for_coordinates(place_name: &str) -> Result<Option<PlaceCoordinates>, Box<dyn std::error::Error>> {
     let lua = tarantool::lua_state();
 
-    let response: Option<data_fetcher::dto::CoordinatesResponse> = transport::rpc::client::Builder::new(&lua)
+    let response: Option<data_fetcher::api::CoordinatesResponse> = transport::rpc::client::Builder::new(&lua)
         .role_endpoint("app.roles.data_fetcher", "/get_coordinates")
         .call(&mut transport::Context::background(), place_name)
         .map_err(|e| {
@@ -128,7 +128,7 @@ fn make_remote_call_to_data_fetcher_for_coordinates(place_name: &str) -> Result<
     Ok(response.map(|c| {
         match c.coordinates {
             None => PlaceCoordinates::CouldNotBeFound([]),
-            Some(coords) => PlaceCoordinates::Value(dto::Coordinates {
+            Some(coords) => PlaceCoordinates::Value(api::Coordinates {
                 latitude: coords.latitude,
                 longitude: coords.longitude,
             })
@@ -136,10 +136,10 @@ fn make_remote_call_to_data_fetcher_for_coordinates(place_name: &str) -> Result<
     }))
 }
 
-fn make_remote_call_to_data_fetcher_for_weather(coordinates: &dto::Coordinates) -> Result<Option<data_fetcher::dto::Weather>, Box<dyn std::error::Error>> {
+fn make_remote_call_to_data_fetcher_for_weather(coordinates: &api::Coordinates) -> Result<Option<data_fetcher::api::Weather>, Box<dyn std::error::Error>> {
     let lua = tarantool::lua_state();
 
-    let response: Option<data_fetcher::dto::Weather> = transport::rpc::client::Builder::new(&lua)
+    let response: Option<data_fetcher::api::Weather> = transport::rpc::client::Builder::new(&lua)
         .role_endpoint("app.roles.data_fetcher", "/get_weather")
         .call(&mut transport::Context::background(), (coordinates.latitude, coordinates.longitude))
         .map_err(|e| {

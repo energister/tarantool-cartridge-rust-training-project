@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tarantool::space::{FieldType, IsNullable, Space};
 use tarantool::tuple::Tuple;
-use crate::storage::{dto, PlaceCoordinates};
+use crate::storage::{api, PlaceCoordinates};
 
 const SPACE_NAME: &str = "place";
 
@@ -10,7 +10,7 @@ struct PlaceTuple {
     place_name: String,
     bucket_id: u32,
     // `None` means that the place is not listed in the geo database
-    coordinates: Option<dto::Coordinates>,
+    coordinates: Option<api::Coordinates>,
 }
 impl tarantool::tuple::Encode for PlaceTuple {}
 
