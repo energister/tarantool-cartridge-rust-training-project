@@ -3,8 +3,10 @@ mod place_storage;
 mod weather_storage;
 
 use crate::data_fetcher;
+use serde::{Deserialize, Serialize};
 use shors::transport;
 use tarantool;
+use tarantool::datetime::Datetime;
 use time::OffsetDateTime;
 use tlua::{LuaRead, PushInto};
 
@@ -13,6 +15,16 @@ pub enum PlaceCoordinates {
     CouldNotBeFound([(); 0]),
     Value(api::Coordinates),
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+struct WeatherTuple {
+    place_name: String,
+    bucket_id: u32,
+    point_in_time: Datetime,
+    expiration: Datetime,
+    weather_data: data_fetcher::api::Weather
+}
+impl tarantool::tuple::Encode for WeatherTuple {}
 
 #[tarantool::proc]
 pub fn create_spaces(is_master: bool) -> Result<(), Box<dyn std::error::Error>> {
@@ -25,15 +37,14 @@ pub fn create_spaces(is_master: bool) -> Result<(), Box<dyn std::error::Error>> 
 
 #[tarantool::proc]
 pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<api::StorageResponse>, Box<dyn std::error::Error>> {
-
-    let stored_weather: Option<data_fetcher::api::Weather> = weather_storage::weather_get(place_name)?;
+    let stored_weather = weather_storage::weather_get(place_name)?;
     // Keep a copy of expiration for logging purposes
     let expiration_for_log = stored_weather.as_ref().map(|w| w.expiration);
 
-    if let Some(weather) = stored_weather {
-        let expiration: OffsetDateTime = weather.expiration.into();
+    if let Some(stored) = stored_weather {
+        let expiration: OffsetDateTime = stored.expiration.into();
         if OffsetDateTime::now_utc() < expiration {
-            log::debug!("Cache HIT for weather of '{}' (will expire at {})", &place_name, weather.expiration);
+            log::debug!("Cache HIT for weather of '{}' (will expire at {})", &place_name, stored.expiration);
 
             let stored_coordinates = place_storage::coordinates_get(&place_name)?
                 .ok_or("Coordinates should be known if weather is cached")?;
@@ -45,7 +56,7 @@ pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<
                 PlaceCoordinates::Value(coord) => {
                     Ok(Some(api::StorageResponse {
                         coordinates: Some(coord),
-                        weather: Some(weather),
+                        weather: Some(stored.weather_data),
                         cached: true,
                     }))
                 }
@@ -103,7 +114,13 @@ fn fetch_weather(bucket_id: u32, place_name: &str, coordinates: &api::Coordinate
 
     // cache the response
     if let Some(ref w) = weather {
-        weather_storage::weather_upsert(bucket_id, &place_name, w.point_in_time, w.expiration, w.clone())?;
+        weather_storage::weather_upsert(&WeatherTuple {
+            place_name: place_name.to_owned(),
+            bucket_id,
+            point_in_time: w.point_in_time,
+            expiration: w.expiration,
+            weather_data: w.clone(),
+        })?;
     }
 
     Ok(weather)

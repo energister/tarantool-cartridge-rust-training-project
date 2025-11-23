@@ -1,20 +1,7 @@
-use crate::data_fetcher;
-use serde::{Deserialize, Serialize};
-use tarantool::datetime::Datetime;
+use crate::storage::WeatherTuple;
 use tarantool::space::{FieldType, Space};
-use tarantool::tuple::Tuple;
 
 const SPACE_NAME: &str = "weather";
-
-#[derive(Debug, Serialize, Deserialize)]
-struct WeatherTuple {
-    place_name: String,
-    bucket_id: u32,
-    point_in_time: Datetime,
-    expiration: Datetime,
-    weather_data: data_fetcher::api::Weather
-}
-impl tarantool::tuple::Encode for WeatherTuple {}
 
 pub fn create_space() -> Result<(), Box<dyn std::error::Error>> {
     let weather = Space::builder(SPACE_NAME)
@@ -43,15 +30,7 @@ pub fn create_space() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn weather_upsert(bucket_id: u32, place_name: &str, point_in_time: Datetime, expiration: Datetime, weather: data_fetcher::api::Weather) -> Result<Tuple, Box<dyn std::error::Error>> {
-    let tuple = WeatherTuple {
-        place_name: place_name.to_owned(),
-        bucket_id,
-        point_in_time,
-        expiration,
-        weather_data: weather,
-    };
-
+pub fn weather_upsert(tuple: &WeatherTuple) -> Result<(), Box<dyn std::error::Error>> {
     Space::find(SPACE_NAME)
         .ok_or(format!("Can't find space '{SPACE_NAME}'"))?
         .put(&tuple)
@@ -59,18 +38,14 @@ pub fn weather_upsert(bucket_id: u32, place_name: &str, point_in_time: Datetime,
             log::error!("Error while storing into '{SPACE_NAME}': {e:?}");
             e.into()
         })
+        .map(|_| ())
 }
 
-pub fn weather_get(place_name: &str) -> Result<Option<data_fetcher::api::Weather>, Box<dyn std::error::Error>> {
+pub fn weather_get(place_name: &str) -> Result<Option<WeatherTuple>, Box<dyn std::error::Error>> {
     let maybe_stored = Space::find(SPACE_NAME)
         .ok_or(format!("Can't find space '{SPACE_NAME}'"))?
         .get(&(place_name,))?
         .map(|record| record.decode::<WeatherTuple>())
-        .transpose()? // Option<Result<WeatherTuple, _>> -> Result<Option<WeatherTuple>, _>
-        .map(|tuple| {
-            let mut weather = tuple.weather_data;
-            weather.expiration = tuple.expiration;
-            weather
-        });
+        .transpose()?;
     Ok(maybe_stored)
 }
