@@ -14,14 +14,16 @@ pub enum PlaceCoordinates {
     Value(dto::Coordinates),
 }
 
-pub fn create_spaces(is_master: bool) -> Result<bool, Box<dyn std::error::Error>> {
+#[tarantool::proc]
+pub fn create_spaces(is_master: bool) -> Result<(), Box<dyn std::error::Error>> {
     if is_master {
         place_storage::create_space()?;
         weather_storage::create_space()?;
     }
-    Ok(true)
+    Ok(())
 }
 
+#[tarantool::proc]
 pub fn get_weather_for_place(bucket_id: u32, place_name: String) -> Result<Option<dto::StorageResponse>, Box<dyn std::error::Error>> {
 
     let stored_weather: Option<data_fetcher::dto::Weather> = weather_storage::weather_get(place_name.clone())?;

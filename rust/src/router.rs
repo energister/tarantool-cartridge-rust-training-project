@@ -11,6 +11,7 @@ use crate::storage;
 use crate::dto_api;
 use time::format_description::well_known::Rfc3339;
 
+#[tarantool::proc]
 pub fn init_router() -> bool {
     let get_weather_route = Builder::new()
         .with_method("GET")

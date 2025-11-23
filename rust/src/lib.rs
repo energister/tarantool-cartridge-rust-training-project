@@ -22,11 +22,6 @@ pub unsafe extern "C" fn luaopen_librust(l: *mut ffi_lua::lua_State) -> i32 {
         shors::init_lua_functions(&lua).unwrap();
 
         let api = as_table! {
-            "init_router" => tlua::Function::new(router::init_router),
-            "storage" => as_table! {
-                "create_spaces" => tlua::Function::new(storage::create_spaces),
-                "get_weather_for_place" => tlua::Function::new(storage::get_weather_for_place),
-            },
             "data_fetcher" => as_table! {
                 "validate_request_timeout_in_seconds" => tlua::Function::new(data_fetcher::settings::validate_request_timeout_in_seconds)
             }

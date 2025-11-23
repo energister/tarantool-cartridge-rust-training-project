@@ -1,6 +1,8 @@
-local rust = require('librust')
+local rust = require('app.rust')
 
 local function init(opts) -- luacheck: no unused args
+    rust.load("librust", { "init_router" })
+
     assert(rust.init_router(), "Failed to initialize router")
 
     return true
