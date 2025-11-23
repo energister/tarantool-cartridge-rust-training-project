@@ -1,10 +1,9 @@
-local cartridge = require('cartridge')
-local router = require('app.router')
+local rust = require('app.rust')
 
 local function init(opts) -- luacheck: no unused args
-    local httpd = assert(cartridge.service_get('httpd'), "Failed to get httpd service")
+    rust.load("librust", { "init_router" })
 
-    httpd:route({ method = 'GET', path = '/weather'}, router.http_get_weather)
+    assert(rust.init_router(), "Failed to initialize router")
 
     return true
 end
