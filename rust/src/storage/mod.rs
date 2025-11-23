@@ -49,18 +49,11 @@ pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<
             let stored_coordinates = place_storage::coordinates_get(&place_name)?
                 .ok_or("Coordinates should be known if weather is cached")?;
 
-            return match stored_coordinates {
-                PlaceCoordinates::CouldNotBeFound(_) => {
-                    Err("Coordinates should be known if weather is cached".into())
-                },
-                PlaceCoordinates::Value(coord) => {
-                    Ok(Some(api::StorageResponse {
-                        coordinates: Some(coord),
-                        weather: Some(stored.weather_data),
-                        cached: true,
-                    }))
-                }
-            };
+            return Ok(Some(api::StorageResponse {
+                coordinates: Some(stored_coordinates),
+                weather: Some(stored.weather_data),
+                cached: true,
+            }))
         }
     }
 
@@ -93,20 +86,21 @@ pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<
 
 fn get_coordinates(bucket_id: u32, place_name: &str) -> Result<Option<PlaceCoordinates>, Box<dyn std::error::Error>> {
     let stored_coordinates = place_storage::coordinates_get(place_name)?;
-    if stored_coordinates.is_some() {
-        return Ok(stored_coordinates);
+    if let Some(coords) = stored_coordinates {
+        return Ok(Some(PlaceCoordinates::Value(coords)));
     }
 
-    let response = make_remote_call_to_data_fetcher_for_coordinates(place_name)?;
+    match make_remote_call_to_data_fetcher_for_coordinates(place_name)? {
+        None => Ok(None),
+        Some(coordinates) => {
+            if let PlaceCoordinates::Value(ref coords) = coordinates {
+                // cache the response
+                place_storage::coordinates_put(bucket_id, &place_name, coords.clone())?;
+            }
 
-    Ok(if response.is_none() {
-        None
-    } else {
-        // cache the response
-        let coordinates = response.unwrap();
-        place_storage::coordinates_put(bucket_id, &place_name, coordinates.clone())?;
-        Some(coordinates)
-    })
+            Ok(Some(coordinates))
+        }
+    }
 }
 
 fn fetch_weather(bucket_id: u32, place_name: &str, coordinates: &api::Coordinates) -> Result<Option<data_fetcher::api::Weather>, Box<dyn std::error::Error>> {

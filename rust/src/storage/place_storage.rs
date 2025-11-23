@@ -1,7 +1,7 @@
+use crate::storage::api;
 use serde::{Deserialize, Serialize};
-use tarantool::space::{FieldType, IsNullable, Space};
+use tarantool::space::{FieldType, Space};
 use tarantool::tuple::Tuple;
-use crate::storage::{api, PlaceCoordinates};
 
 const SPACE_NAME: &str = "place";
 
@@ -9,8 +9,7 @@ const SPACE_NAME: &str = "place";
 struct PlaceTuple {
     place_name: String,
     bucket_id: u32,
-    // `None` means that the place is not listed in the geo database
-    coordinates: Option<api::Coordinates>,
+    coordinates: api::Coordinates,
 }
 impl tarantool::tuple::Encode for PlaceTuple {}
 
@@ -18,7 +17,7 @@ pub fn create_space() -> Result<(), Box<dyn std::error::Error>> {
     let places = Space::builder(SPACE_NAME)
         .field(("place_name", FieldType::String))
         .field(("bucket_id", FieldType::Unsigned))
-        .field(("coordinates", FieldType::Array, IsNullable::Nullable)) // nullable field
+        .field(("coordinates", FieldType::Array))
         // create space only if it does not exist
         .if_not_exists(true)
         .create()?;
@@ -38,14 +37,11 @@ pub fn create_space() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn coordinates_put(bucket_id: u32, place_name: &str, coordinates: PlaceCoordinates) -> Result<Tuple, Box<dyn std::error::Error>> {
+pub fn coordinates_put(bucket_id: u32, place_name: &str, coordinates: api::Coordinates) -> Result<Tuple, Box<dyn std::error::Error>> {
     let tuple = PlaceTuple {
         place_name: place_name.to_owned(),
         bucket_id,
-        coordinates: match coordinates {
-            PlaceCoordinates::Value(coords) => Some(coords),
-            PlaceCoordinates::CouldNotBeFound(_) => None,
-        },
+        coordinates,
     };
 
     Space::find(SPACE_NAME)
@@ -57,17 +53,12 @@ pub fn coordinates_put(bucket_id: u32, place_name: &str, coordinates: PlaceCoord
         })
 }
 
-pub fn coordinates_get(place_name: &str) -> Result<Option<PlaceCoordinates>, Box<dyn std::error::Error>> {
+pub fn coordinates_get(place_name: &str) -> Result<Option<api::Coordinates>, Box<dyn std::error::Error>> {
     let maybe_stored = Space::find(SPACE_NAME)
         .ok_or(format!("Can't find space '{SPACE_NAME}'"))?
         .get(&(place_name,))?
         .map(|record| record.decode::<PlaceTuple>())
         .transpose()?
-        .map(|place|
-            match place.coordinates {
-                Some(coords) => PlaceCoordinates::Value(coords),
-                None => PlaceCoordinates::CouldNotBeFound([]),
-            }
-        );
+        .map(|place| place.coordinates);
     Ok(maybe_stored)
 }
