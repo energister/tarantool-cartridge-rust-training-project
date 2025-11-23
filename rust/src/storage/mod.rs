@@ -24,9 +24,9 @@ pub fn create_spaces(is_master: bool) -> Result<(), Box<dyn std::error::Error>> 
 }
 
 #[tarantool::proc]
-pub fn get_weather_for_place(bucket_id: u32, place_name: String) -> Result<Option<dto::StorageResponse>, Box<dyn std::error::Error>> {
+pub fn get_weather_for_place(bucket_id: u32, place_name: &str) -> Result<Option<dto::StorageResponse>, Box<dyn std::error::Error>> {
 
-    let stored_weather: Option<data_fetcher::dto::Weather> = weather_storage::weather_get(place_name.clone())?;
+    let stored_weather: Option<data_fetcher::dto::Weather> = weather_storage::weather_get(place_name)?;
     // Keep a copy of expiration for logging purposes
     let expiration_for_log = stored_weather.as_ref().map(|w| w.expiration);
 
@@ -98,7 +98,7 @@ fn get_coordinates(bucket_id: u32, place_name: &str) -> Result<Option<PlaceCoord
     })
 }
 
-fn fetch_weather(bucket_id: u32, place_name: String, coordinates: &dto::Coordinates) -> Result<Option<data_fetcher::dto::Weather>, Box<dyn std::error::Error>> {
+fn fetch_weather(bucket_id: u32, place_name: &str, coordinates: &dto::Coordinates) -> Result<Option<data_fetcher::dto::Weather>, Box<dyn std::error::Error>> {
     let weather = make_remote_call_to_data_fetcher_for_weather(&coordinates)?;
 
     // cache the response

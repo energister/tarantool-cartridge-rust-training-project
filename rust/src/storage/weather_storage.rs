@@ -61,7 +61,7 @@ pub fn weather_upsert(bucket_id: u32, place_name: &str, point_in_time: Datetime,
         })
 }
 
-pub fn weather_get(place_name: String) -> Result<Option<data_fetcher::dto::Weather>, Box<dyn std::error::Error>> {
+pub fn weather_get(place_name: &str) -> Result<Option<data_fetcher::dto::Weather>, Box<dyn std::error::Error>> {
     let maybe_stored = Space::find(SPACE_NAME)
         .ok_or(format!("Can't find space '{SPACE_NAME}'"))?
         .get(&(place_name,))?
